@@ -15,8 +15,8 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]*"
 
 permissions:
-  contents: read    # checkout
-  id-token: write   # Sigstore OIDC token for npm provenance
+  contents: read # checkout
+  id-token: write # Sigstore OIDC token for npm provenance
 
 jobs:
   # ── 1. Quality gate (identical to ci.yml runtime job on Node 22) ──────────
