@@ -13,6 +13,15 @@
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
 
+    // --- Extra strict (low fallout) ---
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+
     // --- DX ---
     "noErrorTruncation": true,
     "skipLibCheck": true
