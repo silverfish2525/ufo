@@ -28,7 +28,8 @@
     "lint:fix": "eslint --fix . && prettier -w src test",
     "prepack": "pnpm build",
     "release": "pnpm test && changelogen --release && npm publish && git push --follow-tags",
-    "typecheck": "vitest run --typecheck",
+    "typecheck": "tsc --noEmit",
+    "test:typecheck": "vitest run --typecheck",
     "test": "pnpm lint && vitest run --typecheck"
   },
   "devDependencies": {
