@@ -84,6 +84,31 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
     return defaultProto ? parseURL(defaultProto + input) : parsePath(input);
   }
 
+  // CORR-06: opaque-scheme URIs — `scheme:` NOT followed by `//` (RFC 3986 §3).
+  // Handles `mailto:a@b.com`, `tel:+1-555-1234`, `urn:isbn:...`, `http:foo`, `sms:...`, etc.
+  // Requires plan 004's tightened alpha-leading scheme class (`[A-Za-z][A-Za-z0-9+.\-]*`)
+  // to correctly distinguish schemes from path segments containing a colon.
+  //
+  // Disambiguation: a bare `foo:bar` string IS a valid opaque URI in RFC 3986. The only
+  // reason we don't accept `123:bar` is that plan 004's regex rejects digit-leading schemes.
+  const _opaqueMatch = input.match(
+    /^[\s\0]*([A-Za-z][A-Za-z0-9+.\-]*:)(?!\/\/)(.*)/,
+  );
+  if (_opaqueMatch) {
+    const [, _proto, _rest = ""] = _opaqueMatch;
+    // The opaque part still admits `?query` and `#fragment` per RFC 3986 §3 (`opaque-part`
+    // is `uric_no_slash *uric`; ufo treats them the same as the hierarchical case).
+    const { pathname, search, hash } = parsePath(_rest);
+    return {
+      protocol: _proto.toLowerCase(),
+      auth: "",
+      host: "",
+      pathname,
+      search,
+      hash,
+    };
+  }
+
   // Extract scheme first (no backslash normalization yet); WHATWG only normalizes
   // `\` → `/` for "special schemes" (http, https, ws, wss, ftp, file).
   const _schemePrefix = input.match(/^[\s\0]*([A-Za-z][A-Za-z\d+.-]*:)/);
