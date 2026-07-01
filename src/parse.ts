@@ -91,9 +91,28 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
   const _isSpecial = isSpecialScheme(_schemeForCheck);
   const _normalized = _isSpecial ? input.replace(/\\/g, "/") : input;
 
-  const [, protocol = "", auth, hostAndPath = ""] =
-    _normalized.match(/^[\s\0]*([A-Za-z][\s\w\0+.-]*:)?\/\/([^/@]+@)?(.*)/) ||
-    [];
+  // Capture EVERYTHING after `//` (authority + path); we'll resolve userinfo below.
+  const [, protocol = "", authorityAndPath = ""] =
+    _normalized.match(/^[\s\0]*([A-Za-z][\s\w\0+.-]*:)?\/\/(.*)/) || [];
+
+  // Find the userinfo/host boundary: WHATWG uses the LAST `@` that appears BEFORE
+  // the first path terminator (`/`, `?`, `#`).
+  const _termIdx = authorityAndPath.search(/[/?#]/);
+  const _authoritySlice =
+    _termIdx === -1 ? authorityAndPath : authorityAndPath.slice(0, _termIdx);
+  const _pathSlice = _termIdx === -1 ? "" : authorityAndPath.slice(_termIdx);
+  const _lastAtInAuthority = _authoritySlice.lastIndexOf("@");
+
+  let auth = "";
+  let hostAndPath = "";
+  if (_lastAtInAuthority === -1) {
+    hostAndPath = authorityAndPath;
+  } else {
+    // Percent-encode any `@` that appears INSIDE userinfo (i.e. before the last @).
+    const _rawUserinfo = _authoritySlice.slice(0, _lastAtInAuthority);
+    auth = _rawUserinfo.replace(/@/g, "%40");
+    hostAndPath = _authoritySlice.slice(_lastAtInAuthority + 1) + _pathSlice;
+  }
 
   // eslint-disable-next-line prefer-const
   let [, host = "", path = ""] = hostAndPath.match(/([^#/?]*)(.*)?/) || [];
@@ -106,7 +125,7 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
 
   return {
     protocol: protocol.toLowerCase(),
-    auth: auth ? auth.slice(0, Math.max(0, auth.length - 1)) : "",
+    auth,
     host,
     pathname,
     search,
