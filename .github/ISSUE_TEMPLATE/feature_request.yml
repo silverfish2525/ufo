@@ -1,0 +1,33 @@
+name: Feature request
+description: Propose a new feature or API for better-ufo
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to accomplish that current better-ufo API makes hard or impossible?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: API sketch, function signature, or behaviour spec.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches, workarounds you tried, or upstream / adjacent libraries that solve this.
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This is additive (does not change existing behaviour of a documented API).
+        - label: I've searched the [upstream unjs/ufo issue tracker](https://github.com/unjs/ufo/issues) to see if this belongs there instead.

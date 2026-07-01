@@ -1,0 +1,56 @@
+name: Bug report
+description: Report a bug in better-ufo
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report.
+
+        **Security bugs:** please use [private security advisories](https://github.com/silverfish2525/better-ufo/security/advisories/new) instead — do NOT file publicly.
+
+  - type: input
+    id: version
+    attributes:
+      label: better-ufo version
+      description: Output of `npm ls better-ufo` or the version pinned in your package.json.
+      placeholder: e.g. 1.6.4-fork.0
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: e.g. 20.11.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Smallest possible code snippet that reproduces the bug. Ideally a runnable link (StackBlitz / CodeSandbox / gist).
+      render: js
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: WPT reference, WHATWG spec section, upstream `unjs/ufo` behaviour, anything else.
