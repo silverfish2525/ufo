@@ -3,7 +3,7 @@
   "type": "module",
   "version": "1.6.4-fork.0",
   "packageManager": "pnpm@10.33.2",
-  "description": "URL utilities for humans — a security-hardened, WHATWG-conformant, type-refined fork of ufo. Adds parseURL/joinURL/normalizeURL security guards, encoding parity with URLSearchParams.toString(), and literal-preserving TypeScript inference.",
+  "description": "URL utilities for humans \u2014 a security-hardened, WHATWG-conformant, type-refined fork of ufo. Adds parseURL/joinURL/normalizeURL security guards, encoding parity with URLSearchParams.toString(), and literal-preserving TypeScript inference.",
   "author": "silverfish2525 (fork maintainer)",
   "contributors": [
     "Pooya Parsa <pooya@pi0.io> (https://github.com/pi0)",
