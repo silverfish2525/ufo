@@ -8,3 +8,4 @@ dist
 types
 .conf*
 *vitest-temp*
+.eslintcache

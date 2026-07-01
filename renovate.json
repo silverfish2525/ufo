@@ -1,5 +1,32 @@
 {
-  "extends": [
-    "github>unjs/renovate-config"
-  ]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "labels": ["dependencies"],
+  "schedule": ["before 9am on monday"],
+  "prConcurrentLimit": 5,
+  "packageRules": [
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "matchPackageNames": ["vitest", "@vitest/coverage-v8", "typescript", "eslint", "@antfu/eslint-config", "tsdown"],
+      "automerge": false,
+      "labels": ["needs-review"],
+      "reviewers": ["silverfish2525"]
+    },
+    {
+      "matchDepTypes": ["dependencies"],
+      "enabled": false,
+      "description": "better-ufo has zero runtime dependencies; alert if this ever changes"
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on the first day of the month"],
+    "automerge": true
+  }
 }
