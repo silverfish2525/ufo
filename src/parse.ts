@@ -29,7 +29,7 @@ export interface ParsedAuth {
 
 export interface ParsedHost {
   hostname: string;
-  port: string;
+  port: string | undefined;
 }
 
 /**
@@ -63,8 +63,8 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
   // dangerous-scheme fast path so `parseURL` and `isScriptProtocol` cannot disagree.
   const _preScheme = input.replace(/[\t\n\r]/g, "");
   const _schemeMatch = _preScheme.match(/^[\s\0]*([\w+.-]{2,}):(.*)/s);
-  if (_schemeMatch && isScriptProtocol(_schemeMatch[1])) {
-    const _proto = `${_schemeMatch[1].toLowerCase()}:`;
+  if (_schemeMatch && isScriptProtocol(_schemeMatch[1] ?? "")) {
+    const _proto = `${(_schemeMatch[1] ?? "").toLowerCase()}:`;
     const _pathname = _schemeMatch[2] ?? "";
     // Preserve original-case scheme in href (behaviour-preserving for callers that
     // use href as a raw string) but always return the normalised protocol field.
@@ -203,7 +203,7 @@ export function parseHost(input = ""): ParsedHost {
   // Non-IPv6 fast path — preserve historical regex-based behavior.
   const [hostname, port] = (input.match(/([^/:]*):?(\d+)?/) || []).splice(1);
   return {
-    hostname: decode(hostname),
+    hostname: decode(hostname ?? ""),
     port,
   };
 }

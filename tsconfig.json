@@ -1,10 +1,33 @@
 {
+  "$schema": "https://www.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "esModuleInterop": true,
+    // --- Module system ---
+    "module": "preserve",              // implies moduleResolution:bundler, esModuleInterop, resolveJsonModule, allowSyntheticDefaultImports
+    "moduleDetection": "force",
+    "lib": ["ESNext", "DOM"],
+    "types": [],
+    "noEmit": true,
+
+    // --- Isolation / erasure ---
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+
+    // --- Extra strict ---
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noUncheckedSideEffectImports": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+
+    // --- DX ---
+    "noErrorTruncation": true,
+    "skipLibCheck": true
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

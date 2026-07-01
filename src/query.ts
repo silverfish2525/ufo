@@ -59,7 +59,7 @@ export function parseQuery<T extends ParsedQuery = ParsedQuery>(
     if (s.length < 2) {
       continue;
     }
-    const key = decodeQueryKey(s[1]);
+    const key = decodeQueryKey(s[1] ?? "");
     if (key === "__proto__" || key === "constructor") {
       continue;
     }
