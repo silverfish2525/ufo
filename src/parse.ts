@@ -1,5 +1,5 @@
 import { decode } from "./encoding";
-import { hasProtocol } from "./utils";
+import { hasProtocol, isScriptProtocol } from "./utils";
 
 const protocolRelative = Symbol.for("ufo:protocolRelative");
 
@@ -49,15 +49,20 @@ export interface ParsedHost {
  * @returns A parsed URL object.
  */
 export function parseURL(input = "", defaultProto?: string): ParsedURL {
-  const _specialProtoMatch = input.match(
-    /^[\s\0]*(blob:|data:|javascript:|vbscript:)(.*)/i,
-  );
-  if (_specialProtoMatch) {
-    const [, _proto, _pathname = ""] = _specialProtoMatch;
+  // WHATWG: browsers strip \t \n \r from schemes before matching. Do the same before the
+  // dangerous-scheme fast path so `parseURL` and `isScriptProtocol` cannot disagree.
+  const _preScheme = input.replace(/[\t\n\r]/g, "");
+  const _schemeMatch = _preScheme.match(/^[\s\0]*([\w+.-]{2,}):(.*)/s);
+  if (_schemeMatch && isScriptProtocol(_schemeMatch[1])) {
+    const _proto = `${_schemeMatch[1].toLowerCase()}:`;
+    const _pathname = _schemeMatch[2] ?? "";
+    // Preserve original-case scheme in href (behaviour-preserving for callers that
+    // use href as a raw string) but always return the normalised protocol field.
+    const _rawProto = _preScheme.match(/^[\s\0]*([\w+.-]{2,}:)/)?.[1] ?? _proto;
     return {
-      protocol: _proto.toLowerCase(),
+      protocol: _proto,
       pathname: _pathname,
-      href: _proto + _pathname,
+      href: _rawProto + _pathname,
       auth: "",
       host: "",
       search: "",
