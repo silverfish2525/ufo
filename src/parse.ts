@@ -293,9 +293,15 @@ export function stringifyParsedURL(parsed: Partial<ParsedURL>): string {
   const hash = parsed.hash || "";
   const auth = parsed.auth ? parsed.auth + "@" : "";
   const host = parsed.host || "";
-  const proto =
-    parsed.protocol || parsed[protocolRelative]
-      ? (parsed.protocol || "") + "//"
+  // Emit the "//" authority separator ONLY when an authority exists (host present, or
+  // any userinfo, or protocol-relative). Opaque URIs (mailto:, tel:, urn:, data:, javascript:,
+  // http:foo) have `protocol` set but no host and no protocolRelative flag — they must
+  // serialize as `scheme:opaque-part`, NOT `scheme://opaque-part`.
+  const hasAuthority = Boolean(host) || Boolean(auth) || Boolean(parsed[protocolRelative]);
+  const proto = parsed.protocol
+    ? parsed.protocol + (hasAuthority ? "//" : "")
+    : parsed[protocolRelative]
+      ? "//"
       : "";
   return proto + auth + host + pathname + search + hash;
 }
