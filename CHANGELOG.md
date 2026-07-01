@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. See [standa
 
 ## Unreleased
 
+### Breaking
+
+- **Minimum Node.js version raised to `>=22.0.0`.** Node 20 reached end-of-life
+  on 2026-04-30 and is no longer supported. Consumers on Node 20 will see an
+  `EBADENGINE` warning on install; the shipped ES2022 output may still execute
+  under `--experimental-*` flags but this configuration is untested.
+
 ### Security
 
 - **Breaking (default)**: `joinURL` and `withBase` now normalize a leading `//` in the concatenated

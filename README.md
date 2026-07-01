@@ -39,6 +39,18 @@ URL utilities for humans — a **security-hardened, WHATWG-conformant, type-refi
 See [`advisor-plans/`](./advisor-plans) for the full plan set that
 drove the fork's changes.
 
+## Requirements
+
+- **Node.js `>=22.0.0`** — Node 20 reached end-of-life on 2026-04-30 and
+  is not supported. The library's compiled output targets ES2022, so it
+  runs on any modern JavaScript runtime that supports [`URL`][mdn-url]
+  (browsers, Deno, Bun, workers, edge), but we only test against Node.
+- Package manager: any (`npm`, `pnpm`, `yarn`, `bun`). Contributors use
+  [`pnpm@10`][pnpm-corepack] via corepack.
+
+[mdn-url]: https://developer.mozilla.org/en-US/docs/Web/API/URL
+[pnpm-corepack]: https://pnpm.io/installation#using-corepack
+
 ## Install
 
 Install using npm or your favourite package manager:

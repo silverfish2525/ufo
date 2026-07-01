@@ -15,6 +15,17 @@ We aim to acknowledge reports within 72 hours and to ship a fix or
 mitigation within 2 weeks for confirmed vulnerabilities. Coordinated
 disclosure with upstream is preferred where a fix is portable.
 
+### Supported versions
+
+Only the **latest published minor** of `better-ufo` receives security fixes.
+Supported runtimes:
+
+| Node.js       | Support           |
+| ------------- | ----------------- |
+| `24.x`        | ✅ tested in CI    |
+| `22.x` (LTS)  | ✅ tested in CI    |
+| `< 22`        | ❌ not supported   |
+
 ### Scope
 
 In-scope vulnerability classes for `better-ufo`:

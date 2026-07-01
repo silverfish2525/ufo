@@ -7,6 +7,8 @@ a correct PR.
 
 ## Dev setup
 
+**Requires Node.js `>=22.0.0`.** Node 20 is EOL (2026-04) and unsupported.
+
 ```bash
 corepack enable
 pnpm install

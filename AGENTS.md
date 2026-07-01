@@ -28,6 +28,8 @@ Guidance for AI coding agents working in this repository.
 - **Zero runtime dependencies.** Enforced by `scripts/check-no-runtime-deps.ts`. Do not add to
   `"dependencies"`. Dev-only tools go in `"devDependencies"`.
 - **No DOM assumptions.** `better-ufo` runs in Node, browsers, workers, edge runtimes, Deno, Bun.
+- **Node floor: `>=22.0.0`.** Node 20 is EOL (2026-04) and is not tested. Do not add branches that depend on features newer than Node 22 without gating them behind a feature-detection.
+- **Toolchain floor:** `tsdown`, `@antfu/eslint-config`, and `eslint-plugin-unicorn` all require the V8 Iterator Helpers proposal — this is why Node 22 is the hard minimum for building/linting.
   Do not reference `window`, `document`, `location`, or any browser-only global from `src/**`
   (the deprecated `$URL` class is the sole exception — it implements the `URL` interface, whose
   types come from the `DOM` lib).
