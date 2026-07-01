@@ -1,5 +1,11 @@
 import { describe, expect, it, test } from "vitest";
-import { parseURL, parseHost, parseFilename, parseAuth } from "../src";
+import {
+  parseURL,
+  parseHost,
+  parseFilename,
+  parseAuth,
+  isScriptProtocol,
+} from "../src";
 
 describe("parseURL", () => {
   const tests = [
@@ -174,6 +180,81 @@ describe("parseURL", () => {
         hash: "",
       },
     },
+
+    // Test strings are inert — they exercise the parser, not any renderer.
+    // SEC-01: browsers strip \t \n \r from schemes; parseURL must too
+    {
+      input: "java\tscript:alert('hello')",
+      out: {
+        protocol: "javascript:",
+        pathname: "alert('hello')",
+        href: "javascript:alert('hello')",
+        auth: "",
+        host: "",
+        search: "",
+        hash: "",
+      },
+    },
+    {
+      input: "java\nscript:alert(1)",
+      out: {
+        protocol: "javascript:",
+        pathname: "alert(1)",
+        href: "javascript:alert(1)",
+        auth: "",
+        host: "",
+        search: "",
+        hash: "",
+      },
+    },
+    {
+      input: "JAVA\tSCRIPT:alert(1)",
+      out: {
+        protocol: "javascript:",
+        pathname: "alert(1)",
+        href: "JAVASCRIPT:alert(1)",
+        auth: "",
+        host: "",
+        search: "",
+        hash: "",
+      },
+    },
+    {
+      input: "vb\tscript:msgbox 1",
+      out: {
+        protocol: "vbscript:",
+        pathname: "msgbox 1",
+        href: "vbscript:msgbox 1",
+        auth: "",
+        host: "",
+        search: "",
+        hash: "",
+      },
+    },
+    {
+      input: "da\tta:text/html,x",
+      out: {
+        protocol: "data:",
+        pathname: "text/html,x",
+        href: "data:text/html,x",
+        auth: "",
+        host: "",
+        search: "",
+        hash: "",
+      },
+    },
+    {
+      input: "bl\tob:https://video_url",
+      out: {
+        protocol: "blob:",
+        pathname: "https://video_url",
+        href: "blob:https://video_url",
+        auth: "",
+        host: "",
+        search: "",
+        hash: "",
+      },
+    },
   ];
 
   for (const t of tests) {
@@ -181,6 +262,15 @@ describe("parseURL", () => {
       expect(structuredClone(parseURL(t.input))).toEqual(t.out);
     });
   }
+
+  test("SEC-01: hasProtocol and isScriptProtocol agree on tampered javascript scheme", () => {
+    // Test strings are inert — they exercise the parser, not any renderer.
+    const tampered = "java\tscript:alert(1)";
+    const parsed = parseURL(tampered);
+    expect(parsed.protocol).toBe("javascript:");
+    // The whole point of SEC-01: after the fix, the composed gate returns true.
+    expect(isScriptProtocol(parsed.protocol)).toBe(true);
+  });
 });
 
 describe("parseHost", () => {

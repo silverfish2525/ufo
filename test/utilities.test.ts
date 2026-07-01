@@ -45,6 +45,22 @@ describe("hasProtocol", () => {
     { input: "/\t//test.com", out: [false, false, true] },
     { input: String.raw`/\/test.com`, out: [false, false, true] },
     { input: String.raw`/\localhost//`, out: [false, false, true] },
+
+    // Test strings are inert — they exercise the parser, not any renderer.
+    // SEC-01: WHATWG-mandated \t \n \r stripping inside scheme
+    { input: "java\tscript:alert(1)", out: [true, false, true] },
+    { input: "java\nscript:alert(1)", out: [true, false, true] },
+    { input: "java\rscript:alert(1)", out: [true, false, true] },
+    { input: "JAVA\tSCRIPT:alert(1)", out: [true, false, true] },
+    { input: "vb\tscript:alert(1)", out: [true, false, true] },
+    { input: "da\tta:text/html,x", out: [true, false, true] },
+    { input: "bl\tob:x", out: [true, false, true] },
+    { input: "ht\ttp://example.com", out: [true, true, true] },
+    // Whitespace that browsers do NOT strip stays permissive under default (matches prior behavior,
+    // documents the boundary):
+    { input: "java\vscript:alert(1)", out: [true, false, true] },
+    { input: "java\fscript:alert(1)", out: [true, false, true] },
+    { input: "java\u00A0script:alert(1)", out: [true, false, true] },
   ];
 
   for (const t of tests) {
@@ -68,6 +84,21 @@ describe("isScriptProtocol", () => {
     { input: "javaScript:", out: true },
     { input: "vbscript:", out: true },
     { input: "\0vbscript:", out: true },
+
+    // Test strings are inert — they exercise the parser, not any renderer.
+    // SEC-01: tampering inside the scheme must not defeat detection
+    { input: "java\tscript:", out: true },
+    { input: "java\nscript:", out: true },
+    { input: "java\rscript:", out: true },
+    { input: "JAVA\tSCRIPT:", out: true },
+    { input: "vb\tscript:", out: true },
+    { input: "da\tta:", out: true },
+    { input: "bl\tob:", out: true },
+    { input: " \tjavascript:", out: true }, // leading whitespace + tab inside
+    // Negative controls: benign schemes with same tampering must NOT flag as script
+    { input: "ht\ttp:", out: false },
+    { input: "htt\nps:", out: false },
+    { input: "ma\tilto:", out: false },
   ];
   for (const t of tests) {
     test(t.input.toString(), () => {
