@@ -9,3 +9,6 @@ types
 .conf*
 *vitest-temp*
 .eslintcache
+.agents/
+.pi/
+advisor-plans/

@@ -14,30 +14,26 @@ URL utilities for humans — a **security-hardened, WHATWG-conformant, type-refi
 
 ### What this fork adds
 
-- **WHATWG compliance**: `encodeQueryKey` / `encodeQueryValue` are
-  byte-for-byte identical to `URLSearchParams.toString()` (`|`, `` ` ``,
-  `^`, `@`, `:`, `,`, `;`, `=`, `?` all encoded per spec).
+- **Literal-preserving TypeScript**: `joinURL("a", "/b")` is typed as
+  `"a/b"`, `normalizeURL(literal)` returns the literal type,
+  `withQuery(base, { k: "v" })` narrows to `"base?k=v"` — dozens of
+  type-level refinements via `Refine<S, T>` so your editor catches
+  URL bugs at compile time, not runtime.
 - **Security guards**: proto-pollution filtering in `parseQuery`,
   open-redirect normalization in `joinURL` (opt-out via
   `{ allowProtocolRelative: true }`), credential-leak guard in
-  `parseAuth`, script-protocol detection with `isScriptProtocol`.
+  `parseAuth`, `javascript:` / `vbscript:` / `data:` detection via
+  `isScriptProtocol`.
+- **WHATWG compliance**: `encodeQueryKey` / `encodeQueryValue` are
+  byte-for-byte identical to `URLSearchParams.toString()` — `|`,
+  `` ` ``, `^`, `@`, `:`, `,`, `;`, `=`, `?` all encoded per spec.
 - **RFC 3986 correctness**: opaque-scheme parsing (`mailto:`, `tel:`,
   `urn:`, `data:`, `blob:`), IPv6 host parsing, `withProtocol` preserves
   host on `localhost:9000`.
-- **Literal-preserving TypeScript**: `joinURL("a", "/b") → "a/b"`,
-  `normalizeURL(literal) → literal`, `withQuery(base, { k: "v" }) → "base?k=v"`
-  — dozens of type-level refinements via `Refine<S, T>`.
 - **New APIs**: `withHost`, `withPort`, `withoutPort`, `withoutAuth`,
   `withPathParameters`.
-- **CI quality gates**: WPT `urltestdata.json` ratchet (1007 tests + 65
-  expected-fail), size-limit (5 gates, ESM 4.93 KB brotlied), knip,
-  attw + publint, zero-runtime-dep invariant.
-- **Full drop-in compatibility**: 100 % additive API surface — every
-  upstream export is present with the same signature. CJS + ESM +
-  `d.mts` + `d.cts` shipped.
-
-See [`advisor-plans/`](./advisor-plans) for the full plan set that
-drove the fork's changes.
+- **Full drop-in compatibility**: 100 % additive — every upstream export
+  present with the same signature. CJS + ESM + `d.mts` + `d.cts` shipped.
 
 ## Requirements
 

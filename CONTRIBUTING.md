@@ -79,12 +79,6 @@ issue first — this is a design property, not an oversight.
   either mean the fix regressed WHATWG parity (revert) or the fixture case genuinely does
   not apply to `better-ufo`'s WHATWG-adjacent stance (needs discussion, not silent skip).
 
-## Deferred work (v2 slate)
-
-Correctness deltas that are semver-major or that require a design decision live in
-[`docs/v2-plan.md`](docs/v2-plan.md). Grep for `TODO(v2)` in `src/` to see the in-source
-counterparts.
-
 ## Upstream references
 
 Historical PR / issue references in comments (`unjs/ufo#237`, etc.) intentionally point to

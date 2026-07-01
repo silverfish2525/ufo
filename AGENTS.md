@@ -11,7 +11,7 @@ Guidance for AI coding agents working in this repository.
   (run by `vitest --typecheck`). WPT fixture: `tests/fixture/urltestdata.json`.
 - `dist/` — build output. Do NOT commit changes here; `tsdown` regenerates on `pnpm build`.
 - `scripts/` — repo scripts. Currently: `check-no-runtime-deps.ts` (loaded via `jiti`).
-- `advisor-plans/` — the 21 self-authored improvement plans that drove the fork.
+- `tests/` — Vitest test suite.
 
 ## Hot files (understand these before proposing changes)
 
