@@ -34,6 +34,24 @@ export interface HasProtocolOptions {
   strict?: boolean;
 }
 
+/**
+ * Options accepted by {@link joinURL} and {@link withBase} to control leading
+ * `//` handling on the concatenated result.
+ *
+ * @group utils
+ */
+export interface JoinURLOptions {
+  /**
+   * If `true`, a leading `//` in the concatenated result is preserved (produces
+   * a protocol-relative URL). Default is `false` — the leading `//` is
+   * collapsed to a single `/` to prevent accidental open-redirect payloads
+   * when the base is empty or `"/"`.
+   *
+   * @default false
+   */
+  allowProtocolRelative?: boolean;
+}
+
 export function hasProtocol(
   inputString: string,
   opts?: HasProtocolOptions,
@@ -273,6 +291,32 @@ export function cleanDoubleSlashes(input = ""): string {
 }
 
 /**
+ * Internal: collapse a leading run of 2+ slashes on `result` to a single `/`
+ * when the effective `base` did not itself supply a scheme or protocol-relative
+ * prefix. Used to prevent open-redirect via `joinURL("", "//attacker.com")`
+ * and `withBase("//attacker.com", "/")`. See SEC-02.
+ */
+function _normalizeProtocolRelative(
+  result: string,
+  base: string,
+  opts?: JoinURLOptions,
+): string {
+  if (opts?.allowProtocolRelative) {
+    return result;
+  }
+  if (!result.startsWith("//")) {
+    return result;
+  }
+  // If the base itself intentionally carried a scheme or a '//' prefix, the
+  // caller is constructing a scheme-anchored or protocol-relative URL on
+  // purpose — preserve it.
+  if (hasProtocol(base, { acceptRelative: true })) {
+    return result;
+  }
+  return "/" + result.replace(/^\/+/, "");
+}
+
+/**
  * Ensures the URL or pathname starts with base.
  *
  * If input already starts with base, it will not be added again.
@@ -283,23 +327,31 @@ export function cleanDoubleSlashes(input = ""): string {
  * withBase("/foo/bar", "/foo"); // "/foo/bar"
  *
  * withBase("/foo/bar", "/baz"); // "/baz/foo/bar"
+ *
+ * // Leading "//" is normalized (SEC-02 open-redirect hardening):
+ * withBase("//attacker.com/x", "/"); // "/attacker.com/x"
+ * // Opt-out is available for callers who genuinely want a protocol-relative URL:
+ * withBase("//host/x", "/", { allowProtocolRelative: true }); // "//host/x"
  * ```
  *
  * @group utils
  */
-export function withBase(input: string, base: string) {
+export function withBase(input: string, base: string, opts?: JoinURLOptions) {
   if (isEmptyURL(base) || hasProtocol(input)) {
-    return input;
+    return _normalizeProtocolRelative(input, base, opts);
   }
+  // Normalize a protocol-relative input before any path operations so that a
+  // leading '//' does not produce a double-slash mid-result (SEC-02).
+  const _input = _normalizeProtocolRelative(input, base, opts);
   const _base = withoutTrailingSlash(base);
-  if (input.startsWith(_base)) {
-    const nextChar = input[_base.length];
+  if (_input.startsWith(_base)) {
+    const nextChar = _input[_base.length];
     // Ensure '/admin-dashboard' is not considered as having base '/admin/'
     if (!nextChar || nextChar === "/" || nextChar === "?") {
-      return input;
+      return _input;
     }
   }
-  return joinURL(_base, input);
+  return joinURL(_base, _input);
 }
 
 /**
@@ -415,6 +467,11 @@ export function isNonEmptyURL(url: string) {
   return url && url !== "/";
 }
 
+export function joinURL(base: string, ...input: string[]): string;
+export function joinURL(
+  base: string,
+  ...input: [...string[], JoinURLOptions]
+): string;
 /**
  * Joins multiple URL segments into a single URL.
  *
@@ -422,14 +479,31 @@ export function isNonEmptyURL(url: string) {
  *
  * ```js
  * joinURL("a", "/b", "/c"); // "a/b/c"
+ * // Leading "//" in the result is normalized (SEC-02 open-redirect hardening):
+ * joinURL("", "//attacker.com"); // "/attacker.com"
+ * // Opt-out is available for callers who genuinely want a protocol-relative URL:
+ * joinURL("", "//host", { allowProtocolRelative: true }); // "//host"
  * ```
  *
  * @group utils
  */
-export function joinURL(base: string, ...input: string[]): string {
+export function joinURL(
+  base: string,
+  ...input: Array<string | JoinURLOptions>
+): string {
+  // Runtime detection: if the last argument is a plain object (not a string,
+  // not an array, not null), treat it as options and pop it from `input`.
+  let opts: JoinURLOptions | undefined;
+  const last = input.at(-1);
+  if (last !== null && typeof last === "object" && !Array.isArray(last)) {
+    opts = last as JoinURLOptions;
+    input = input.slice(0, -1);
+  }
+
+  const segments = (input as string[]).filter((url) => isNonEmptyURL(url));
   let url = base || "";
 
-  for (const segment of input.filter((url) => isNonEmptyURL(url))) {
+  for (const segment of segments) {
     if (url) {
       // TODO: Handle .. when joining
       const _segment = segment.replace(JOIN_LEADING_SLASH_RE, "");
@@ -439,7 +513,7 @@ export function joinURL(base: string, ...input: string[]): string {
     }
   }
 
-  return url;
+  return _normalizeProtocolRelative(url, base, opts);
 }
 
 /**
