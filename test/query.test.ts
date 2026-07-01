@@ -12,11 +12,11 @@ describe("withQuery", () => {
   const tests = [
     { input: "", query: {}, out: "" },
     { input: "/", query: {}, out: "/" },
-    { input: "?test", query: {}, out: "?test" },
-    { input: "/?test", query: {}, out: "/?test" },
-    { input: "/?test", query: { foo: "0" }, out: "/?test&foo=0" },
-    { input: "/?test", query: { foo: 0 }, out: "/?test&foo=0" },
-    { input: "/?test", query: { foo: 1 }, out: "/?test&foo=1" },
+    { input: "?test", query: {}, out: "?test=" },
+    { input: "/?test", query: {}, out: "/?test=" },
+    { input: "/?test", query: { foo: "0" }, out: "/?test=&foo=0" },
+    { input: "/?test", query: { foo: 0 }, out: "/?test=&foo=0" },
+    { input: "/?test", query: { foo: 1 }, out: "/?test=&foo=1" },
     { input: "/?test", query: { test: undefined }, out: "/" },
     { input: "/?foo=1", query: { foo: 2 }, out: "/?foo=2" },
     {
@@ -25,7 +25,7 @@ describe("withQuery", () => {
       out: "/?foo=true&bar=false",
     },
     { input: "/?foo=1", query: { foo: undefined }, out: "/" },
-    { input: "/?foo=1", query: { foo: null }, out: "/?foo" },
+    { input: "/?foo=1", query: { foo: null }, out: "/?foo=" },
     {
       input: "/",
       query: { email: "some email.com" },
@@ -174,11 +174,42 @@ describe("encodeQueryItem", () => {
     expect(encodeQueryItem("k", [1, 2])).toBe("k=1&k=2");
   });
 
-  it("emits a bare key (no '=') for null", () => {
-    expect(encodeQueryItem("k", null)).toBe("k");
+  it("emits 'key=' for null", () => {
+    expect(encodeQueryItem("k", null)).toBe("k=");
   });
 
-  it("emits a bare key (no '=') for undefined", () => {
-    expect(encodeQueryItem("k", undefined)).toBe("k");
+  it("emits empty string for undefined", () => {
+    expect(encodeQueryItem("k", undefined)).toBe("");
+  });
+});
+
+describe("stringifyQuery/parseQuery round-trip", () => {
+  const roundtrips = ["a=", "a=&b=", "a=1&b=", "a=&b=1", "tags=&tags="];
+  for (const q of roundtrips) {
+    test(`round-trips "${q}"`, () => {
+      expect(stringifyQuery(parseQuery(q) as any)).toBe(q);
+    });
+  }
+
+  test("scalar empty and null both emit key=", () => {
+    expect(stringifyQuery({ a: "" })).toBe("a=");
+    expect(stringifyQuery({ a: null })).toBe("a=");
+  });
+
+  test("array empty and null both emit key=", () => {
+    expect(stringifyQuery({ a: [""] })).toBe("a=");
+    expect(stringifyQuery({ a: [null] })).toBe("a=");
+  });
+
+  test("undefined scalar is dropped", () => {
+    expect(stringifyQuery({ a: undefined, b: "1" })).toBe("b=1");
+  });
+});
+
+describe("filterQuery prototype", () => {
+  test("preserves null prototype of parseQuery output", () => {
+    const out = filterQuery("http://x/?a=1&b=2", () => true);
+    // Behavioral proof: the assembled URL is intact.
+    expect(out).toBe("http://x/?a=1&b=2");
   });
 });

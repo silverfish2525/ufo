@@ -528,9 +528,15 @@ export function filterQuery(
 
   const parsed = parseURL(input);
   const query = parseQuery(parsed.search);
-  const filteredQuery = Object.fromEntries(
-    Object.entries(query).filter(([key, value]) => predicate(key, value)),
+  const filteredQuery: ParsedQuery = Object.create(
+    Object.getPrototypeOf(query),
   );
+  for (const key of Object.keys(query)) {
+    const value = query[key];
+    if (predicate(key, value)) {
+      filteredQuery[key] = value;
+    }
+  }
   parsed.search = stringifyQuery(filteredQuery);
   return stringifyParsedURL(parsed);
 }

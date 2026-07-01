@@ -107,17 +107,23 @@ export function encodeQueryItem(
   if (typeof value === "number" || typeof value === "boolean") {
     value = String(value);
   }
-  if (!value) {
-    return encodeQueryKey(key);
-  }
 
   if (Array.isArray(value)) {
     return value
       .map(
         (_value: QueryValue) =>
-          `${encodeQueryKey(key)}=${encodeQueryValue(_value)}`,
+          `${encodeQueryKey(key)}=${_value == null || _value === "" ? "" : encodeQueryValue(_value)}`,
       )
       .join("&");
+  }
+
+  if (value === undefined) {
+    return "";
+  }
+
+  // Empty-string / null / 0-ish scalar → emit `key=` for round-trip parity with array positions.
+  if (!value) {
+    return `${encodeQueryKey(key)}=`;
   }
 
   return `${encodeQueryKey(key)}=${encodeQueryValue(value)}`;
