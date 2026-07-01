@@ -56,6 +56,17 @@ const SCRIPT_SCHEMES: ReadonlySet<string> = new Set([
   "vbscript",
 ]);
 
+// URL_BOUNDARY_CHARS enumerates the characters that terminate a path segment in a URL,
+// i.e. those that can legitimately follow a base match in `withBase` / `withoutBase`.
+// Adding "#" here closes CORR-02 / CORR-04 (see plan 006). Keep this in sync when
+// adding new `with*` / `without*` helpers that need base-boundary detection.
+const URL_BOUNDARY_CHARS = new Set(["/", "?", "#"]);
+
+function isAtBaseBoundary(input: string, baseLen: number): boolean {
+  if (input.length === baseLen) return true; // exact match — end of input is a boundary
+  return URL_BOUNDARY_CHARS.has(input[baseLen]!);
+}
+
 /**
  * Check if a path starts with `./` or `../`.
  *
@@ -430,12 +441,11 @@ export function withBase(input: string, base: string, opts?: JoinURLOptions) {
   // leading '//' does not produce a double-slash mid-result (SEC-02).
   const _input = _normalizeProtocolRelative(input, base, opts);
   const _base = withoutTrailingSlash(base);
-  if (_input.startsWith(_base)) {
-    const nextChar = _input[_base.length];
-    // Ensure '/admin-dashboard' is not considered as having base '/admin/'
-    if (!nextChar || nextChar === "/" || nextChar === "?") {
-      return _input;
-    }
+  if (_input.startsWith(_base) && isAtBaseBoundary(_input, _base.length)) {
+    // Ensure '/admin-dashboard' is not considered as having base '/admin/'.
+    // Boundary chars: "/", "?", "#" (URL_BOUNDARY_CHARS) — CORR-02 fix: a
+    // fragment on the input must not defeat the "base already present" check.
+    return _input;
   }
   return joinURL(_base, _input);
 }
@@ -461,9 +471,11 @@ export function withoutBase(input: string, base: string) {
   if (!input.startsWith(_base)) {
     return input;
   }
-  // Ensure '/admin-dashboard' is not considered as having base '/admin/'
-  const nextChar = input[_base.length];
-  if (nextChar && nextChar !== "/" && nextChar !== "?") {
+  // Ensure '/admin-dashboard' is not considered as having base '/admin/'.
+  // Boundary chars: "/", "?", "#" (see URL_BOUNDARY_CHARS). This also closes
+  // CORR-04 — a fragment on the input must not defeat the "starts with base"
+  // check. See plan 006 in advisor-plans/.
+  if (!isAtBaseBoundary(input, _base.length)) {
     return input;
   }
   // Collapse leading slashes to prevent protocol-relative URL injection
