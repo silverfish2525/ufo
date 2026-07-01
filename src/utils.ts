@@ -167,7 +167,7 @@ export function withoutTrailingSlash(
     path = input.slice(0, fragmentIndex);
     fragment = input.slice(fragmentIndex);
   }
-  const [s0, ...s] = path.split("?");
+  const [s0 = "", ...s] = path.split("?");
   const cleanPath = s0.endsWith("/") ? s0.slice(0, -1) : s0;
   return (
     (cleanPath || "/") + (s.length > 0 ? `?${s.join("?")}` : "") + fragment
@@ -473,7 +473,7 @@ export function joinRelativeURL(..._input: string[]): string {
         continue;
       }
       if (s === "..") {
-        if (segments.length === 1 && hasProtocol(segments[0])) {
+        if (segments.length === 1 && hasProtocol(segments[0] ?? "")) {
           continue;
         }
         segments.pop();

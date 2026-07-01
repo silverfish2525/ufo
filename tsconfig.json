@@ -13,7 +13,9 @@
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
 
-    // --- Extra strict (low fallout) ---
+    // --- Extra strict ---
+    "noUncheckedIndexedAccess": true,
+    "noUncheckedSideEffectImports": true,
     "noImplicitReturns": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,

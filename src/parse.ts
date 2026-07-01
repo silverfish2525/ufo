@@ -23,7 +23,7 @@ export interface ParsedAuth {
 
 export interface ParsedHost {
   hostname: string;
-  port: string;
+  port: string | undefined;
 }
 
 /**
@@ -53,7 +53,7 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
     /^[\s\0]*(blob:|data:|javascript:|vbscript:)(.*)/i,
   );
   if (_specialProtoMatch) {
-    const [, _proto, _pathname = ""] = _specialProtoMatch;
+    const [, _proto = "", _pathname = ""] = _specialProtoMatch;
     return {
       protocol: _proto.toLowerCase(),
       pathname: _pathname,
@@ -157,7 +157,7 @@ export function parseAuth(input = ""): ParsedAuth {
 export function parseHost(input = ""): ParsedHost {
   const [hostname, port] = (input.match(/([^/:]*):?(\d+)?/) || []).splice(1);
   return {
-    hostname: decode(hostname),
+    hostname: decode(hostname ?? ""),
     port,
   };
 }
