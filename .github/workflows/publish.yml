@@ -1,0 +1,70 @@
+name: publish
+
+# Fires when a v*.*.* tag is pushed (e.g. `git tag v2.0.1 && git push fork v2.0.1`).
+# Runs the full quality gate first, then publishes to npm with Sigstore provenance.
+#
+# One-time setup (per repo, per maintainer):
+#   1. Create a granular npm token scoped to `better-ufo` (Automation type, no expiry or 90-day):
+#      https://www.npmjs.com/settings/silverfish2525/tokens/granular-access-tokens/new
+#   2. Add it as a GitHub Actions secret named `NPM_TOKEN`:
+#      https://github.com/silverfish2525/better-ufo/settings/secrets/actions/new
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]*"
+
+permissions:
+  contents: read    # checkout
+  id-token: write   # Sigstore OIDC token for npm provenance
+
+jobs:
+  # ── 1. Quality gate (identical to ci.yml runtime job on Node 22) ──────────
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - run: npm i -fg corepack && corepack enable
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install
+
+      - run: pnpm check:no-deps
+      - run: pnpm check:knip
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm test:package
+      - run: pnpm exec size-limit
+      - run: pnpm vitest run --typecheck
+
+  # ── 2. Publish (only after the quality gate passes) ───────────────────────
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/better-ufo
+    steps:
+      - uses: actions/checkout@v6
+
+      - run: npm i -fg corepack && corepack enable
+
+      # registry-url is required for NODE_AUTH_TOKEN injection by setup-node.
+      # provenance=true here + id-token:write above = Sigstore attestation.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install
+
+      # prepack runs automd + tsdown automatically (defined in package.json).
+      - run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
