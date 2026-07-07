@@ -60,8 +60,8 @@ export function withPathParameters(
   const { interpolate = DEFAULT_INTERPOLATE, onMissing = "leave" } = options;
   if (!interpolate.flags.includes("g")) {
     throw new TypeError(
-      `withPathParameters: options.interpolate must have the /g flag `
-      + `(got ${interpolate.toString()}).`,
+      `withPathParameters: options.interpolate must have the /g flag ` +
+        `(got ${interpolate.toString()}).`,
     );
   }
   // Reset lastIndex defensively — the caller may have used the regex before.
@@ -74,9 +74,7 @@ export function withPathParameters(
     if (!Object.hasOwn(parameters, key)) {
       switch (onMissing) {
         case "throw": {
-          throw new TypeError(
-            `withPathParameters: missing value for placeholder "${key}".`,
-          );
+          throw new TypeError(`withPathParameters: missing value for placeholder "${key}".`);
         }
         case "empty": {
           return "";

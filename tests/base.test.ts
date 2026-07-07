@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { withBase, withoutBase } from "../src";
 
 describe("withBase", () => {
@@ -187,8 +187,8 @@ describe("withBase — SEC-02 leading '//' normalization", () => {
     expect(withBase("https://a.com", "/foo")).toBe("https://a.com");
   });
   it("escape hatch: { allowProtocolRelative: true } preserves '//'", () => {
-    expect(
-      withBase("//attacker.com/x", "/", { allowProtocolRelative: true }),
-    ).toBe("//attacker.com/x");
+    expect(withBase("//attacker.com/x", "/", { allowProtocolRelative: true })).toBe(
+      "//attacker.com/x",
+    );
   });
 });

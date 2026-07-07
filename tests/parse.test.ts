@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import {
   isScriptProtocol,
   parseAuth,
@@ -258,11 +258,9 @@ describe("parseURL", () => {
     },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(structuredClone(parseURL(t.input))).toEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(structuredClone(parseURL(t.input))).toEqual(t.out);
+  });
 
   it("sEC-01: hasProtocol and isScriptProtocol agree on tampered javascript scheme", () => {
     // Test strings are inert — they exercise the parser, not any renderer.
@@ -481,11 +479,9 @@ describe("parseHost", () => {
     { input: "google.com", out: { hostname: "google.com", port: undefined } },
   ];
 
-  for (const t of tests) {
-    it(t.input, () => {
-      expect(parseHost(t.input)).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(parseHost(t.input)).toStrictEqual(t.out);
+  });
 });
 
 describe("parseFilename", () => {
@@ -513,10 +509,7 @@ describe("parseFilename", () => {
       out: "filename.ext",
     },
     {
-      input: [
-        "http://example.com/path/to/filename.ext/?query=true#hash",
-        false,
-      ],
+      input: ["http://example.com/path/to/filename.ext/?query=true#hash", false],
       out: undefined,
     },
     { input: ["http://example.com/path/to/dir/", false], out: undefined },
@@ -578,13 +571,9 @@ describe("parseFilename", () => {
     expect(parseFilename("/path/to/filename.ext")).toEqual("filename.ext");
   });
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(
-        parseFilename(t.input[0].toString(), { strict: t.input[1] }),
-      ).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(parseFilename(t.input[0], { strict: t.input[1] })).toStrictEqual(t.out);
+  });
 });
 
 describe("parseAuth", () => {
@@ -773,9 +762,7 @@ describe("sEC-23: whole-input tab/newline strip (WHATWG step 1)", () => {
 });
 
 describe("parseFilename edge cases", () => {
-  const cases: Array<
-    [string, { strict?: boolean } | undefined, string | undefined]
-  > = [
+  const cases: Array<[string, { strict?: boolean } | undefined, string | undefined]> = [
     ["filename.ext", undefined, "filename.ext"],
     ["filename.ext", { strict: true }, "filename.ext"],
     ["/filename.ext", undefined, "filename.ext"],
@@ -788,10 +775,13 @@ describe("parseFilename edge cases", () => {
     ["", undefined, undefined],
     ["/", undefined, undefined],
   ];
-  for (const [input, opts, expected] of cases) {
-    const label = `${JSON.stringify(input)} ${opts?.strict ? "(strict)" : ""}`;
-    it(label, () => {
-      expect(parseFilename(input, opts)).toBe(expected);
-    });
-  }
+  const labeledCases = cases.map(([input, opts, expected]) => ({
+    input,
+    opts,
+    expected,
+    name: `${JSON.stringify(input)} ${opts?.strict ? "(strict)" : ""}`,
+  }));
+  it.each(labeledCases)("$name", ({ input, opts, expected }) => {
+    expect(parseFilename(input, opts)).toBe(expected);
+  });
 });

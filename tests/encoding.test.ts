@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import {
   decode,
   decodePath,
@@ -57,11 +57,9 @@ describe("encode", () => {
     },
   ];
 
-  for (const t of tests) {
-    it(t.input, () => {
-      expect(encode(t.input)).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(encode(t.input)).toStrictEqual(t.out);
+  });
 });
 
 describe("encodeHash", () => {
@@ -77,11 +75,9 @@ describe("encodeHash", () => {
     { input: "abc{def}ghi^jkl", output: "abc{def}ghi^jkl" },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(encodeHash(t.input)).toStrictEqual(t.output);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(encodeHash(t.input)).toStrictEqual(t.output);
+  });
 });
 
 describe("encodeQueryValue", () => {
@@ -100,11 +96,9 @@ describe("encodeQueryValue", () => {
     },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(encodeQueryValue(t.input.toString())).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(encodeQueryValue(t.input.toString())).toStrictEqual(t.out);
+  });
 
   // TEST-20 + WHATWG form-urlencoded parity: non-string JSON.stringify branch.
   it("non-string input goes through JSON.stringify (form-urlencoded serialization)", () => {
@@ -121,23 +115,7 @@ describe("encodeQueryValue", () => {
   });
   it("wHATWG form-urlencoded parity with URLSearchParams (regression: issues #233, #240, #301, #302, #304)", () => {
     // Every char that native URLSearchParams encodes should also be encoded here.
-    for (const ch of [
-      "!",
-      "'",
-      "(",
-      ")",
-      "~",
-      "^",
-      "`",
-      "|",
-      ";",
-      "?",
-      ",",
-      ":",
-      "@",
-      "$",
-      "=",
-    ]) {
+    for (const ch of ["!", "'", "(", ")", "~", "^", "`", "|", ";", "?", ",", ":", "@", "$", "="]) {
       const nativeOut = new URLSearchParams([["k", ch]]).toString().slice(2);
       expect(encodeQueryValue(ch)).toBe(nativeOut);
     }
@@ -152,11 +130,9 @@ describe("encodeQueryKey", () => {
     { input: "=value", out: "%3Dvalue" },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(encodeQueryKey(t.input.toString())).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(encodeQueryKey(t.input.toString())).toStrictEqual(t.out);
+  });
 });
 
 describe("encodePath", () => {
@@ -173,11 +149,9 @@ describe("encodePath", () => {
     { input: "path/to/resource/file.txt", out: "path/to/resource/file.txt" },
   ];
 
-  for (const t of tests) {
-    it(t.input, () => {
-      expect(encodePath(t.input)).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(encodePath(t.input)).toStrictEqual(t.out);
+  });
 });
 
 describe("encodeParam", () => {
@@ -194,11 +168,9 @@ describe("encodeParam", () => {
     { input: true, out: "true" },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(encodeParam(t.input.toString())).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(encodeParam(t.input.toString())).toStrictEqual(t.out);
+  });
 });
 
 describe("decode", () => {
@@ -208,7 +180,7 @@ describe("decode", () => {
     {
       input:
         "!%40%23%24%25%26%2A%28%29-_%3D%2B%5B%5D%7B%7D%3B%3A%27%22%2C.%3C%3E%2F%3F%60%7C%5C%22",
-      out: "!@#$%&*()-_=+[]{};:'\",.<>/?`|\\\"",
+      out: '!@#$%&*()-_=+[]{};:\'",.<>/?`|\\"',
     },
     { input: "hello%20world", out: "hello world" },
     {
@@ -222,11 +194,9 @@ describe("decode", () => {
     { input: "foo%2Bbar%2Bbaz", out: "foo+bar+baz" },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(decode(t.input.toString())).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(decode(t.input)).toStrictEqual(t.out);
+  });
 });
 
 describe("decodeQueryKey", () => {
@@ -239,11 +209,9 @@ describe("decodeQueryKey", () => {
     { input: "key%2bwith%2bplus", out: "key+with+plus" },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(decodeQueryKey(t.input.toString())).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(decodeQueryKey(t.input)).toStrictEqual(t.out);
+  });
 });
 
 describe("decodeQueryValue", () => {
@@ -258,11 +226,9 @@ describe("decodeQueryValue", () => {
     // malformed percent-triple falls through decode()'s try/catch.
     { input: "%zz", out: "%zz" },
   ];
-  for (const t of tests) {
-    it(JSON.stringify(t.input), () => {
-      expect(decodeQueryValue(t.input)).toStrictEqual(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(decodeQueryValue(t.input)).toStrictEqual(t.out);
+  });
   it("round-trip parity with encodeQueryValue for a common set", () => {
     const samples = ["hello world", "a=1&b=2", "raw+plus", "path/to/x"];
     for (const s of samples) {

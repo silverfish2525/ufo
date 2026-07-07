@@ -1,0 +1,94 @@
+shellEmulator: true
+
+trustPolicy: no-downgrade
+
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.3
+  vite-plus: 0.2.3
+  vitest: 4.1.9
+  "@vitest/coverage-v8": 4.1.9
+
+  "@arethetypeswrong/core": ^0.18.4
+  publint: ^0.3.21
+  typescript: ^6.0.3
+  "@types/node": ^26.1.0
+
+  automd: ^0.4.3
+  changelogen: ^0.6.2
+
+  "@oxlint/binding-darwin-arm64": 1.72.0
+  "@oxfmt/binding-darwin-arm64": 0.57.0
+  "@oxlint/binding-android-arm64": 1.72.0
+  "@oxlint/binding-darwin-x64": 1.72.0
+  "@oxlint/binding-linux-arm64-gnu": 1.72.0
+  "@oxlint/binding-linux-arm64-musl": 1.72.0
+  "@oxlint/binding-linux-x64-gnu": 1.72.0
+  "@oxlint/binding-linux-x64-musl": 1.72.0
+  "@oxlint/binding-wasm32-wasi": 1.72.0
+  "@oxlint/binding-win32-arm64-msvc": 1.72.0
+  "@oxlint/binding-win32-x64-msvc": 1.72.0
+
+overrides:
+  vite: "catalog:"
+  vitest: "catalog:"
+
+peerDependencyRules:
+  allowAny:
+    - vite
+    - vitest
+  allowedVersions:
+    vite: "*"
+    vitest: "*"
+
+allowBuilds:
+  "@parcel/watcher": true
+  esbuild: true
+
+minimumReleaseAgeExclude:
+  - "@oxc-parser/binding-android-arm-eabi@0.139.0"
+  - "@oxc-parser/binding-android-arm64@0.139.0"
+  - "@oxc-parser/binding-darwin-arm64@0.139.0"
+  - "@oxc-parser/binding-darwin-x64@0.139.0"
+  - "@oxc-parser/binding-freebsd-x64@0.139.0"
+  - "@oxc-parser/binding-linux-arm-gnueabihf@0.139.0"
+  - "@oxc-parser/binding-linux-arm-musleabihf@0.139.0"
+  - "@oxc-parser/binding-linux-arm64-gnu@0.139.0"
+  - "@oxc-parser/binding-linux-arm64-musl@0.139.0"
+  - "@oxc-parser/binding-linux-ppc64-gnu@0.139.0"
+  - "@oxc-parser/binding-linux-riscv64-gnu@0.139.0"
+  - "@oxc-parser/binding-linux-riscv64-musl@0.139.0"
+  - "@oxc-parser/binding-linux-s390x-gnu@0.139.0"
+  - "@oxc-parser/binding-linux-x64-gnu@0.139.0"
+  - "@oxc-parser/binding-linux-x64-musl@0.139.0"
+  - "@oxc-parser/binding-openharmony-arm64@0.139.0"
+  - "@oxc-parser/binding-wasm32-wasi@0.139.0"
+  - "@oxc-parser/binding-win32-arm64-msvc@0.139.0"
+  - "@oxc-parser/binding-win32-ia32-msvc@0.139.0"
+  - "@oxc-parser/binding-win32-x64-msvc@0.139.0"
+  - "@voidzero-dev/vite-plus-core@0.2.3"
+  - "@voidzero-dev/vite-plus-darwin-arm64@0.2.3"
+  - "@voidzero-dev/vite-plus-darwin-x64@0.2.3"
+  - "@voidzero-dev/vite-plus-linux-arm64-gnu@0.2.3"
+  - "@voidzero-dev/vite-plus-linux-arm64-musl@0.2.3"
+  - "@voidzero-dev/vite-plus-linux-x64-gnu@0.2.3"
+  - "@voidzero-dev/vite-plus-linux-x64-musl@0.2.3"
+  - "@voidzero-dev/vite-plus-win32-arm64-msvc@0.2.3"
+  - "@voidzero-dev/vite-plus-win32-x64-msvc@0.2.3"
+  - vite-plus@0.2.3
+  - "@oxlint/binding-android-arm64@1.72.0"
+  - "@oxlint/binding-darwin-arm64@1.72.0"
+  - "@oxlint/binding-darwin-x64@1.72.0"
+  - "@oxlint/binding-linux-arm64-gnu@1.72.0"
+  - "@oxlint/binding-linux-arm64-musl@1.72.0"
+  - "@oxlint/binding-linux-x64-gnu@1.72.0"
+  - "@oxlint/binding-linux-x64-musl@1.72.0"
+  - "@oxlint/binding-win32-arm64-msvc@1.72.0"
+  - "@oxlint/binding-win32-x64-msvc@1.72.0"
+  - "@oxlint/binding-wasm32-wasi@1.72.0"
+  - "@oxlint/plugins@1.68.0"
+  - "oxlint@1.72.0"
+  - "oxlint-tsgolint@0.24.0"
+  - "@oxlint-tsgolint/darwin-arm64@0.24.0"
+  - "@oxlint-tsgolint/darwin-x64@0.24.0"
+  - "@oxlint-tsgolint/linux-arm64-gnu@0.24.0"
+  - "@oxlint-tsgolint/linux-x64-gnu@0.24.0"

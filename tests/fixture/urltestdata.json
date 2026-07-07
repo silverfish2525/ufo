@@ -2228,7 +2228,7 @@
     "hash": ""
   },
   {
-    "input": "http://example.com/﻿/foo",
+    "input": "http://example.com/\uFEFF/foo",
     "base": "about:blank",
     "href": "http://example.com/%EF%BB%BF/foo",
     "origin": "http://example.com",

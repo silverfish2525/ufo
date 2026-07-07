@@ -1,11 +1,5 @@
 import type { QueryObject } from "./query";
-import {
-  decode,
-  decodePath,
-  encodeHash,
-  encodeHost,
-  encodePath,
-} from "./encoding";
+import { decode, decodePath, encodeHash, encodeHost, encodePath } from "./encoding";
 import { parseAuth, parseHost, parseURL } from "./parse";
 import { parseQuery, stringifyQuery } from "./query";
 import { withoutLeadingSlash, withTrailingSlash } from "./utils";
@@ -23,9 +17,7 @@ export class $URL implements URL {
 
   constructor(input = "") {
     if (typeof input !== "string") {
-      throw new TypeError(
-        `URL input should be string received ${typeof input} (${String(input)})`,
-      );
+      throw new TypeError(`URL input should be string received ${typeof input} (${String(input)})`);
     }
 
     const parsed = parseURL(input);
@@ -58,8 +50,8 @@ export class $URL implements URL {
     return this.protocol.length;
   }
 
-  get isAbsolute() {
-    return this.hasProtocol || this.pathname[0] === "/";
+  get isAbsolute(): boolean {
+    return this.hasProtocol !== 0 || this.pathname[0] === "/";
   }
 
   get search(): string {
@@ -73,14 +65,16 @@ export class $URL implements URL {
       const value = this.query[name];
       if (Array.isArray(value)) {
         for (const v of value) {
-          p.append(name, v !== undefined && v !== null ? String(v) : "");
+          if (v === undefined || v === null) {
+            p.append(name, "");
+          } else if (typeof v === "object") {
+            p.append(name, JSON.stringify(v));
+          } else {
+            p.append(name, String(v));
+          }
         }
-      }
-      else {
-        p.append(
-          name,
-          typeof value === "string" ? value : JSON.stringify(value ?? null),
-        );
+      } else {
+        p.append(name, typeof value === "string" ? value : JSON.stringify(value ?? null));
       }
     }
     return p;
@@ -99,18 +93,15 @@ export class $URL implements URL {
       return "";
     }
     const { username, password } = parseAuth(this.auth);
-    return (
-      encodeURIComponent(username)
-      + (password ? `:${encodeURIComponent(password)}` : "")
-    );
+    return encodeURIComponent(username) + (password ? `:${encodeURIComponent(password)}` : "");
   }
 
   get href(): string {
     const auth = this.encodedAuth;
-    const originWithAuth
-      = (this.protocol ? `${this.protocol}//` : "")
-        + (auth ? `${auth}@` : "")
-        + encodeHost(this.host);
+    const originWithAuth =
+      (this.protocol ? `${this.protocol}//` : "") +
+      (auth ? `${auth}@` : "") +
+      encodeHost(this.host);
     return this.hasProtocol !== 0 && this.isAbsolute
       ? originWithAuth + this.fullpath
       : this.fullpath;
@@ -124,8 +115,7 @@ export class $URL implements URL {
     Object.assign(this.query, url.query);
 
     if (url.pathname) {
-      this.pathname
-        = withTrailingSlash(this.pathname) + withoutLeadingSlash(url.pathname);
+      this.pathname = withTrailingSlash(this.pathname) + withoutLeadingSlash(url.pathname);
     }
 
     if (url.hash) {

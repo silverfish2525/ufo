@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { normalizeURL, parseURL, withoutTrailingSlash } from "../src";
 
 describe("normalizeURL", () => {
@@ -7,7 +7,7 @@ describe("normalizeURL", () => {
     "http://foo.com/bar": "http://foo.com/bar",
     "proto://path/to": "proto://path/to",
     "/bar": "/bar",
-    "bar": "bar",
+    bar: "bar",
     "./": "./",
     ".": ".",
     "": "",
@@ -25,15 +25,13 @@ describe("normalizeURL", () => {
     "http://my_email%40gmail.com:password@www.my_site.com":
       "http://my_email%40gmail.com:password@www.my_site.com",
     "/test?query=123,123#hash, test": "/test?query=123%2C123#hash,%20test",
-    "http://test.com/%C3%B6?foo=تست":
-      "http://test.com/%C3%B6?foo=%D8%AA%D8%B3%D8%AA",
+    "http://test.com/%C3%B6?foo=تست": "http://test.com/%C3%B6?foo=%D8%AA%D8%B3%D8%AA",
     "/http:/": "/http:/",
     "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]/":
       "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]/",
     "http://localhost/?redirect=http:%2F%2Fgoogle.com?q=test":
       "http://localhost/?redirect=http%3A%2F%2Fgoogle.com%3Fq%3Dtest",
-    "http://localhost/?email=some+v1@email.com":
-      "http://localhost/?email=some+v1%40email.com",
+    "http://localhost/?email=some+v1@email.com": "http://localhost/?email=some+v1%40email.com",
     "http://localhost/?email=some%2Bv1%40email.com":
       "http://localhost/?email=some%2Bv1%40email.com",
     "http://localhost/abc/deg%2F%2Ftest?email=some+v1@email.com":
@@ -83,19 +81,15 @@ describe("normalizeURL", () => {
     "http://223.255.255.254",
   ];
 
-  for (const input in tests) {
-    it(input, () => {
-      expect(normalizeURL(input)).toBe((tests)[input]);
-    });
-  }
+  it.each(Object.entries(tests))("%s", (input, expected) => {
+    expect(normalizeURL(input)).toBe(expected);
+  });
 
-  for (const input of validURLS) {
-    it(input, () => {
-      expect(withoutTrailingSlash(normalizeURL(input))).toBe(
-        withoutTrailingSlash(new URL(input).href),
-      );
-    });
-  }
+  it.each(validURLS)("%s", (input) => {
+    expect(withoutTrailingSlash(normalizeURL(input))).toBe(
+      withoutTrailingSlash(new URL(input).href),
+    );
+  });
 });
 
 describe("sEC-20: normalizeURL host round-trip (no authority leak)", () => {

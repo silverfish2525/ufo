@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import {
   hasProtocol,
   isEqual,
@@ -77,17 +77,13 @@ describe("hasProtocol", () => {
     { input: "+abc://foo.com", out: [false, false, false] },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      const [withDefault, withStrict, withAcceptRelative] = t.out;
-      expect(hasProtocol(t.input)).toBe(withDefault);
-      expect(hasProtocol(t.input, { strict: true })).toBe(withStrict);
-      expect(hasProtocol(t.input, { acceptRelative: true })).toBe(
-        withAcceptRelative,
-      );
-      expect(hasProtocol(t.input, true)).toBe(withAcceptRelative);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    const [withDefault, withStrict, withAcceptRelative] = t.out;
+    expect(hasProtocol(t.input)).toBe(withDefault);
+    expect(hasProtocol(t.input, { strict: true })).toBe(withStrict);
+    expect(hasProtocol(t.input, { acceptRelative: true })).toBe(withAcceptRelative);
+    expect(hasProtocol(t.input, true)).toBe(withAcceptRelative);
+  });
 
   it("accepts multi-character schemes (non-strict)", () => {
     // RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) — min 2 chars total
@@ -131,11 +127,9 @@ describe("isScriptProtocol", () => {
     { input: "htt\nps:", out: false },
     { input: "ma\tilto:", out: false },
   ];
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(isScriptProtocol(t.input)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(isScriptProtocol(t.input)).toBe(t.out);
+  });
 });
 
 describe("isRelative", () => {
@@ -146,11 +140,9 @@ describe("isRelative", () => {
     { input: "https://", out: false },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(isRelative(t.input)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(isRelative(t.input)).toBe(t.out);
+  });
 });
 
 describe("stringifyParsedURL", () => {
@@ -186,15 +178,11 @@ describe("stringifyParsedURL", () => {
     },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(
-        stringifyParsedURL(
-          typeof t.input === "string" ? parsePath(t.input) : t.input,
-        ),
-      ).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(stringifyParsedURL(typeof t.input === "string" ? parsePath(t.input) : t.input)).toBe(
+      t.out,
+    );
+  });
 });
 
 describe("withHttp", () => {
@@ -209,11 +197,9 @@ describe("withHttp", () => {
     { input: "foo.bar.com", out: "http://foo.bar.com" },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(withHttp(t.input)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(withHttp(t.input)).toBe(t.out);
+  });
 });
 
 describe("withHttps", () => {
@@ -231,11 +217,9 @@ describe("withHttps", () => {
     { input: "foo.bar.com", out: "https://foo.bar.com" },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(withHttps(t.input)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(withHttps(t.input)).toBe(t.out);
+  });
 });
 
 describe("withProtocol", () => {
@@ -288,25 +272,17 @@ describe("withProtocol", () => {
     },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(withProtocol(t.input, t.protocol)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(withProtocol(t.input, t.protocol)).toBe(t.out);
+  });
 
   // Issue unjs/ufo#237: `withProtocol('localhost:9000', ...)` used to strip
   // the host and produce `http://9000`. HOST_PORT_RE now disambiguates
   // hostname:port from opaque URI schemes.
   it("issue #237: preserves host when input is `hostname:port`", () => {
-    expect(withProtocol("localhost:9000", "http://")).toBe(
-      "http://localhost:9000",
-    );
-    expect(withProtocol("foo.com:8080/path", "https://")).toBe(
-      "https://foo.com:8080/path",
-    );
-    expect(withProtocol("dev-host.local:3000/x", "http://")).toBe(
-      "http://dev-host.local:3000/x",
-    );
+    expect(withProtocol("localhost:9000", "http://")).toBe("http://localhost:9000");
+    expect(withProtocol("foo.com:8080/path", "https://")).toBe("https://foo.com:8080/path");
+    expect(withProtocol("dev-host.local:3000/x", "http://")).toBe("http://dev-host.local:3000/x");
     // Opaque schemes still get their scheme replaced — the guard only fires
     // for real hostname-shaped inputs (containing `.` or exactly `localhost`).
     expect(withProtocol("tel:1234567890", "skype:")).toBe("skype:1234567890");
@@ -330,15 +306,14 @@ describe("withoutProtocol", () => {
     { input: "callto://+1234567890", out: "+1234567890" },
   ];
 
-  for (const t of tests) {
-    it(t.input.toString(), () => {
-      expect(withoutProtocol(t.input)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(withoutProtocol(t.input)).toBe(t.out);
+  });
 });
 
 describe("isEqual", () => {
-  const tests: { input: [string, string, any?]; out: boolean }[] = [
+  type IsEqualOptions = Parameters<typeof isEqual>[2];
+  const tests: { input: [string, string, IsEqualOptions?]; out: boolean }[] = [
     { input: ["/foo", "/foo/"], out: true },
     { input: ["foo", "/foo"], out: true },
     { input: ["foo", "/foo/"], out: true },
@@ -352,7 +327,7 @@ describe("isEqual", () => {
     it(`${t.input[0]} == ${t.input[1]} ${
       t.input[2] !== undefined ? JSON.stringify(t.input[2]) : ""
     }`, () => {
-      expect(isEqual(t.input[0], t.input[1], t.input[2] as { trailingSlash?: boolean; leadingSlash?: boolean; encoding?: boolean })).toBe(t.out);
+      expect(isEqual(t.input[0], t.input[1], t.input[2])).toBe(t.out);
     });
   }
 });
@@ -402,9 +377,7 @@ describe("withFragment", () => {
     expect(withFragment("https://a.com/b", "h")).toBe("https://a.com/b#h");
   });
   it("fast-path: replaces existing '#hash'", () => {
-    expect(withFragment("https://a.com/b#old", "new")).toBe(
-      "https://a.com/b#new",
-    );
+    expect(withFragment("https://a.com/b#old", "new")).toBe("https://a.com/b#new");
   });
   it("cORR-20: empty hash strips an existing fragment", () => {
     expect(withFragment("/foo#bar", "")).toBe("/foo");
@@ -442,11 +415,9 @@ describe("withoutFragment", () => {
     },
   ];
 
-  for (const t of tests) {
-    it(`${t.input}`, () => {
-      expect(withoutFragment(t.input)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(withoutFragment(t.input)).toBe(t.out);
+  });
 
   it("fast-path: no '#' returns input identity", () => {
     const input = "https://a.com/b";
@@ -482,11 +453,9 @@ describe("withoutHost", () => {
     },
   ];
 
-  for (const t of tests) {
-    it(`${t.input}`, () => {
-      expect(withoutHost(t.input)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input", (t) => {
+    expect(withoutHost(t.input)).toBe(t.out);
+  });
 
   it("fast-path: host-less input returned unchanged", () => {
     expect(withoutHost("/a/b")).toBe("/a/b");
@@ -526,24 +495,16 @@ describe("withHost (plan 021)", () => {
 
 describe("withPort (plan 021)", () => {
   it("sets port when absent", () => {
-    expect(withPort("http://example.com/x", 8080)).toBe(
-      "http://example.com:8080/x",
-    );
+    expect(withPort("http://example.com/x", 8080)).toBe("http://example.com:8080/x");
   });
   it("replaces existing port", () => {
-    expect(withPort("http://example.com:80/x", 443)).toBe(
-      "http://example.com:443/x",
-    );
+    expect(withPort("http://example.com:80/x", 443)).toBe("http://example.com:443/x");
   });
   it("accepts string port", () => {
-    expect(withPort("http://example.com/x", "8080")).toBe(
-      "http://example.com:8080/x",
-    );
+    expect(withPort("http://example.com/x", "8080")).toBe("http://example.com:8080/x");
   });
   it("preserves userinfo and IPv6 brackets", () => {
-    expect(withPort("http://u:p@example.com/x", 8080)).toBe(
-      "http://u:p@example.com:8080/x",
-    );
+    expect(withPort("http://u:p@example.com/x", 8080)).toBe("http://u:p@example.com:8080/x");
     expect(withPort("http://[::1]/x", 8080)).toBe("http://[::1]:8080/x");
     expect(withPort("http://[::1]:80/x", 443)).toBe("http://[::1]:443/x");
   });
@@ -562,9 +523,7 @@ describe("withPort (plan 021)", () => {
 
 describe("withoutPort (plan 021)", () => {
   it("strips port from absolute URL", () => {
-    expect(withoutPort("http://example.com:8080/x")).toBe(
-      "http://example.com/x",
-    );
+    expect(withoutPort("http://example.com:8080/x")).toBe("http://example.com/x");
   });
   it("no-op when no port present", () => {
     expect(withoutPort("http://example.com/x")).toBe("http://example.com/x");
@@ -583,14 +542,10 @@ describe("withoutPort (plan 021)", () => {
 
 describe("withoutAuth (plan 021)", () => {
   it("strips user:pass@ userinfo", () => {
-    expect(withoutAuth("http://user:pw@example.com/x")).toBe(
-      "http://example.com/x",
-    );
+    expect(withoutAuth("http://user:pw@example.com/x")).toBe("http://example.com/x");
   });
   it("strips user-only userinfo", () => {
-    expect(withoutAuth("http://user@example.com/x")).toBe(
-      "http://example.com/x",
-    );
+    expect(withoutAuth("http://user@example.com/x")).toBe("http://example.com/x");
   });
   it("no-op when no userinfo present", () => {
     expect(withoutAuth("http://example.com/x")).toBe("http://example.com/x");
@@ -635,9 +590,7 @@ describe("withoutQuery", () => {
 
 describe("withPathParameters (issue #243)", () => {
   it("substitutes single-brace placeholders", () => {
-    expect(withPathParameters("/api/users/{userId}", { userId: "abc" })).toBe(
-      "/api/users/abc",
-    );
+    expect(withPathParameters("/api/users/{userId}", { userId: "abc" })).toBe("/api/users/abc");
   });
   it("substitutes multiple placeholders", () => {
     expect(
@@ -652,9 +605,7 @@ describe("withPathParameters (issue #243)", () => {
   });
   it("percent-encodes reserved chars in values (via encodeParam)", () => {
     expect(withPathParameters("/x/{v}", { v: "a/b" })).toBe("/x/a%2Fb");
-    expect(withPathParameters("/x/{v}", { v: "has space" })).toBe(
-      "/x/has%20space",
-    );
+    expect(withPathParameters("/x/{v}", { v: "has space" })).toBe("/x/has%20space");
   });
   it("mustache double-brace via custom interpolate", () => {
     expect(
@@ -672,19 +623,15 @@ describe("withPathParameters (issue #243)", () => {
     expect(withPathParameters("/x/{missing}", {})).toBe("/x/{missing}");
   });
   it("missing placeholder: onMissing='empty' substitutes empty string", () => {
-    expect(
-      withPathParameters("/x/{a}/{b}", { a: "1" }, { onMissing: "empty" }),
-    ).toBe("/x/1/");
+    expect(withPathParameters("/x/{a}/{b}", { a: "1" }, { onMissing: "empty" })).toBe("/x/1/");
   });
   it("missing placeholder: onMissing='throw' throws TypeError", () => {
-    expect(() =>
-      withPathParameters("/x/{missing}", {}, { onMissing: "throw" }),
-    ).toThrow(TypeError);
+    expect(() => withPathParameters("/x/{missing}", {}, { onMissing: "throw" })).toThrow(TypeError);
   });
   it("rejects non-global interpolate regex", () => {
-    expect(() =>
-      withPathParameters("/x/{v}", { v: "y" }, { interpolate: /\{(.+?)\}/ }),
-    ).toThrow(TypeError);
+    expect(() => withPathParameters("/x/{v}", { v: "y" }, { interpolate: /\{(.+?)\}/ })).toThrow(
+      TypeError,
+    );
   });
   it("prototype pollution: __proto__ / constructor are not resolved from own props", () => {
     // No __proto__ own key on the params object → fall through onMissing.

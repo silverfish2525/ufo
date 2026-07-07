@@ -1,10 +1,6 @@
 import type { IsRelative } from "../_types";
 import { decode } from "../encoding";
-import {
-  withLeadingSlash,
-  withoutTrailingSlash,
-  withTrailingSlash,
-} from "./slash";
+import { withLeadingSlash, withoutTrailingSlash, withTrailingSlash } from "./slash";
 
 /**
  * Check if a path starts with `./` or `../`.
@@ -16,12 +12,10 @@ import {
  *
  * @group utils
  */
-export function isRelative<const S extends string>(
-  inputString: S,
-): IsRelative<S>;
+export function isRelative<const S extends string>(inputString: S): IsRelative<S>;
 export function isRelative(inputString: string): boolean;
 export function isRelative(inputString: string): boolean {
-  return ["./", "../"].some(string_ => inputString.startsWith(string_));
+  return ["./", "../"].some((string_) => inputString.startsWith(string_));
 }
 
 /**

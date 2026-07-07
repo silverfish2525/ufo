@@ -15,10 +15,10 @@ import { modifyParsedURL } from "./_modify";
  *
  * @group utils
  */
-export function withFragment<
-  const Input extends string,
-  const Hash extends string,
->(input: Input, hash: Hash): Refine<Input, WithFragment<Input, Hash>>;
+export function withFragment<const Input extends string, const Hash extends string>(
+  input: Input,
+  hash: Hash,
+): Refine<Input, WithFragment<Input, Hash>>;
 export function withFragment(input: string, hash: string): string;
 export function withFragment(input: string, hash: string): string {
   if (hash === "" || hash === "#") {
@@ -27,8 +27,8 @@ export function withFragment(input: string, hash: string): string {
   const hashIdx = input.indexOf("#");
   const preHash = hashIdx === -1 ? input : input.slice(0, hashIdx);
   if (
-    !/[A-Z\\]/.test(preHash) // no uppercase, no backslash
-    && !/^[a-z][a-z0-9+.-]*:\/\/[^/]*\/\//.test(preHash)
+    !/[A-Z\\]/.test(preHash) && // no uppercase, no backslash
+    !/^[a-z][a-z0-9+.-]*:\/\/[^/]*\/\//.test(preHash)
   ) {
     return `${preHash}#${encodeHash(hash)}`;
   }
@@ -49,15 +49,13 @@ export function withFragment(input: string, hash: string): string {
  *
  * @group utils
  */
-export function withoutFragment<const S extends string>(
-  input: S,
-): Refine<S, WithoutFragment<S>>;
+export function withoutFragment<const S extends string>(input: S): Refine<S, WithoutFragment<S>>;
 export function withoutFragment(input: string): string;
 export function withoutFragment(input: string): string {
   if (
-    !input.includes("#")
-    && !/[A-Z\\]/.test(input)
-    && !/^[a-z][a-z0-9+.-]*:\/\/[^/]*\/\//.test(input)
+    !input.includes("#") &&
+    !/[A-Z\\]/.test(input) &&
+    !/^[a-z][a-z0-9+.-]*:\/\/[^/]*\/\//.test(input)
   ) {
     return input;
   }

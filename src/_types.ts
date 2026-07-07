@@ -20,25 +20,18 @@
  * for the wide `string` type. This is the switch that keeps every refinement
  * backwards compatible: dynamic strings fall back to the base type.
  */
-export type IsStringLiteral<S> = [S] extends [string]
-  ? string extends S
-    ? false
-    : true
-  : false;
+export type IsStringLiteral<S> = [S] extends [string] ? (string extends S ? false : true) : false;
 
 /**
  * Return `Computed` only when `S` is a string literal, otherwise `Base`
  * (defaults to `string`). This is the single guard used by every string
  * transform in `better-ufo`.
  */
-export type Refine<S extends string, Computed, Base = string>
-  = IsStringLiteral<S> extends true ? Computed : Base;
+export type Refine<S extends string, Computed, Base = string> =
+  IsStringLiteral<S> extends true ? Computed : Base;
 
 /** `true` only when every element of the tuple is a string literal. */
-export type AllStringLiteral<T extends readonly unknown[]> = T extends readonly [
-  infer Head,
-  ...infer Rest,
-]
+type AllStringLiteral<T extends readonly unknown[]> = T extends readonly [infer Head, ...infer Rest]
   ? IsStringLiteral<Head> extends true
     ? Rest extends readonly unknown[]
       ? AllStringLiteral<Rest>
@@ -46,26 +39,22 @@ export type AllStringLiteral<T extends readonly unknown[]> = T extends readonly 
     : false
   : true;
 
-type UnionToIntersection<U> = (
-  U extends unknown ? (x: U) => void : never
-) extends (x: infer I) => void
+type UnionToIntersection<U> = (U extends unknown ? (x: U) => void : never) extends (
+  x: infer I,
+) => void
   ? I
   : never;
 
-type LastOf<T>
-  = UnionToIntersection<T extends unknown ? () => T : never> extends () => infer R
-    ? R
-    : never;
+type LastOf<T> =
+  UnionToIntersection<T extends unknown ? () => T : never> extends () => infer R ? R : never;
 
 /** Convert a union of literals into a tuple, preserving declaration order. */
-export type UnionToTuple<T, L = LastOf<T>> = [T] extends [never]
+type UnionToTuple<T, L = LastOf<T>> = [T] extends [never]
   ? []
   : [...UnionToTuple<Exclude<T, L>>, L & T];
 
 /** Ensure a single leading slash. */
-export type WithLeadingSlash<S extends string> = S extends `/${string}`
-  ? S
-  : `/${S}`;
+export type WithLeadingSlash<S extends string> = S extends `/${string}` ? S : `/${S}`;
 
 /** Remove one leading slash (empty result becomes `/`). */
 export type WithoutLeadingSlash<S extends string> = S extends `/${infer R}`
@@ -77,9 +66,7 @@ export type WithoutLeadingSlash<S extends string> = S extends `/${infer R}`
     : S;
 
 /** Ensure a single trailing slash. */
-export type WithTrailingSlash<S extends string> = S extends `${string}/`
-  ? S
-  : `${S}/`;
+export type WithTrailingSlash<S extends string> = S extends `${string}/` ? S : `${S}/`;
 
 /** Remove one trailing slash (empty result becomes `/`). */
 export type WithoutTrailingSlash<S extends string> = S extends `${infer R}/`
@@ -113,33 +100,28 @@ export type IsRelative<S extends string> = Refine<
  * Strip a leading `scheme://` or protocol-relative `//` prefix. Mirrors the
  * runtime `PROTOCOL_REGEX` for the common cases; leaves anything else intact.
  */
-export type StripLeadingProtocol<S extends string>
-  = S extends `${string}://${infer R}` ? R : S extends `//${infer R}` ? R : S;
+type StripLeadingProtocol<S extends string> = S extends `${string}://${infer R}`
+  ? R
+  : S extends `//${infer R}`
+    ? R
+    : S;
 
 /** Replace the protocol of `S` with `P`. */
-export type WithProtocol<
-  S extends string,
-  P extends string,
-> = `${P}${StripLeadingProtocol<S>}`;
+export type WithProtocol<S extends string, P extends string> = `${P}${StripLeadingProtocol<S>}`;
 
-export type WithoutFragment<S extends string>
-  = S extends `${infer Before}#${string}` ? Before : S;
+export type WithoutFragment<S extends string> = S extends `${infer Before}#${string}` ? Before : S;
 
 /**
  * Strip the query string (`?...`) from a URL literal, preserving path and
  * fragment. Base + fragment are re-joined losslessly.
  */
-export type WithoutQuery<S extends string>
-  = S extends `${infer Head}?${infer Rest}`
-    ? Rest extends `${string}#${infer Frag}`
-      ? `${Head}#${Frag}`
-      : Head
-    : S;
+export type WithoutQuery<S extends string> = S extends `${infer Head}?${infer Rest}`
+  ? Rest extends `${string}#${infer Frag}`
+    ? `${Head}#${Frag}`
+    : Head
+  : S;
 
-export type WithFragment<
-  Input extends string,
-  Hash extends string,
-> = Hash extends "" | "#"
+export type WithFragment<Input extends string, Hash extends string> = Hash extends "" | "#"
   ? Input
   : IsUrlSafe<Hash> extends false
     ? string
@@ -148,69 +130,68 @@ export type WithFragment<
       : `${Input}#${Hash}`;
 
 /** Remove `scheme://host` prefix, keeping pathname + search + hash. */
-export type WithoutHost<Input extends string>
-  = Input extends `${string}://${infer Rest}`
-    ? SplitHostPath<Rest> extends [string, infer PathPart extends string]
-      ? PathPart extends `/${string}`
-        ? PathPart
-        : `/${PathPart}`
-      : string
-    : string;
+export type WithoutHost<Input extends string> = Input extends `${string}://${infer Rest}`
+  ? SplitHostPath<Rest> extends [string, infer PathPart extends string]
+    ? PathPart extends `/${string}`
+      ? PathPart
+      : `/${PathPart}`
+    : string
+  : string;
 
-type LowerAlpha
-  = | "a"
-    | "b"
-    | "c"
-    | "d"
-    | "e"
-    | "f"
-    | "g"
-    | "h"
-    | "i"
-    | "j"
-    | "k"
-    | "l"
-    | "m"
-    | "n"
-    | "o"
-    | "p"
-    | "q"
-    | "r"
-    | "s"
-    | "t"
-    | "u"
-    | "v"
-    | "w"
-    | "x"
-    | "y"
-    | "z";
-type UpperAlpha
-  = | "A"
-    | "B"
-    | "C"
-    | "D"
-    | "E"
-    | "F"
-    | "G"
-    | "H"
-    | "I"
-    | "J"
-    | "K"
-    | "L"
-    | "M"
-    | "N"
-    | "O"
-    | "P"
-    | "Q"
-    | "R"
-    | "S"
-    | "T"
-    | "U"
-    | "V"
-    | "W"
-    | "X"
-    | "Y"
-    | "Z";
+type LowerAlpha =
+  | "a"
+  | "b"
+  | "c"
+  | "d"
+  | "e"
+  | "f"
+  | "g"
+  | "h"
+  | "i"
+  | "j"
+  | "k"
+  | "l"
+  | "m"
+  | "n"
+  | "o"
+  | "p"
+  | "q"
+  | "r"
+  | "s"
+  | "t"
+  | "u"
+  | "v"
+  | "w"
+  | "x"
+  | "y"
+  | "z";
+type UpperAlpha =
+  | "A"
+  | "B"
+  | "C"
+  | "D"
+  | "E"
+  | "F"
+  | "G"
+  | "H"
+  | "I"
+  | "J"
+  | "K"
+  | "L"
+  | "M"
+  | "N"
+  | "O"
+  | "P"
+  | "Q"
+  | "R"
+  | "S"
+  | "T"
+  | "U"
+  | "V"
+  | "W"
+  | "X"
+  | "Y"
+  | "Z";
 type Digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 
 /**
@@ -221,7 +202,7 @@ type Digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 type UrlSafeChar = LowerAlpha | UpperAlpha | Digit | "-" | "_" | "." | "~";
 
 /** `true` only when every character of `S` is URL-safe (unreserved). */
-export type IsUrlSafe<S extends string> = S extends ""
+type IsUrlSafe<S extends string> = S extends ""
   ? true
   : S extends `${infer C}${infer Rest}`
     ? C extends UrlSafeChar
@@ -233,8 +214,8 @@ export type IsUrlSafe<S extends string> = S extends ""
  * Stringify a single `key`/`value` pair exactly as `encodeQueryItem` does for
  * URL-safe inputs. Degrades to `string` when encoding would change the bytes.
  */
-export type StringifyQueryItem<K extends string, V>
-  = IsUrlSafe<K> extends false
+export type StringifyQueryItem<K extends string, V> =
+  IsUrlSafe<K> extends false
     ? string
     : V extends null
       ? K
@@ -269,19 +250,19 @@ type JoinQueryParts<
   : Acc;
 
 /** The literal query string produced by `stringifyQuery(T)`. */
-export type StringifyQuery<T> = JoinQueryParts<QueryParts<T>>;
+type StringifyQuery<T> = JoinQueryParts<QueryParts<T>>;
 
 /** Public-facing result type: precise for object literals, `string` otherwise. */
-export type StringifyQueryResult<T>
-  = IsStringLiteral<keyof T & string> extends true ? StringifyQuery<T> : string;
+export type StringifyQueryResult<T> =
+  IsStringLiteral<keyof T & string> extends true ? StringifyQuery<T> : string;
 
 /**
  * Result of `withQuery(input, query)`. Precise when `input` has no existing
  * query/fragment (the common "add query to a clean base" case); `string`
  * otherwise, matching runtime behaviour exactly.
  */
-export type WithQueryResult<Input extends string, Q>
-  = IsStringLiteral<Input> extends true
+export type WithQueryResult<Input extends string, Q> =
+  IsStringLiteral<Input> extends true
     ? Input extends `${string}${"?" | "#"}${string}`
       ? string
       : StringifyQueryResult<Q> extends infer QS extends string
@@ -320,13 +301,13 @@ type FoldJoin<Url extends string, T extends readonly string[]> = T extends reado
   : Url;
 
 /** The literal URL produced by `joinURL(base, ...input)`. */
-export type JoinURL<
-  Base extends string,
-  Rest extends readonly string[],
-> = FoldJoin<Base extends "" ? "" : Base, FilterJoinSegments<Rest>>;
+export type JoinURL<Base extends string, Rest extends readonly string[]> = FoldJoin<
+  Base extends "" ? "" : Base,
+  FilterJoinSegments<Rest>
+>;
 
-export type JoinURLResult<Base extends string, Rest extends readonly string[]>
-  = IsStringLiteral<Base> extends true
+export type JoinURLResult<Base extends string, Rest extends readonly string[]> =
+  IsStringLiteral<Base> extends true
     ? AllStringLiteral<Rest> extends true
       ? JoinURL<Base, Rest>
       : string
@@ -353,8 +334,8 @@ export type JoinRelativeURLResult<
  * `//` in the remainder (path). Query and fragment are always preserved
  * verbatim, which is handled correctly by the identity branch.
  */
-export type CleanDoubleSlashes<S extends string>
-  = IsStringLiteral<S> extends true
+export type CleanDoubleSlashes<S extends string> =
+  IsStringLiteral<S> extends true
     ? S extends `${string}://${infer Rest}`
       ? Rest extends `${string}//${string}`
         ? string
@@ -380,7 +361,8 @@ export type CleanDoubleSlashes<S extends string>
  * is guaranteed to round-trip; inputs failing it degrade to `string`.
  */
 type HasNormalizeAmbiguity<S extends string> = S extends
-  `${string}%${string}` | `${string}?${string}`
+  | `${string}%${string}`
+  | `${string}?${string}`
   ? true
   : IsUrlSafe<S> extends true
     ? false
@@ -392,12 +374,8 @@ type HasNormalizeAmbiguity<S extends string> = S extends
  * otherwise falls back to `string` because the runtime may re-encode or
  * re-serialize.
  */
-export type NormalizeURL<S extends string>
-  = IsStringLiteral<S> extends true
-    ? HasNormalizeAmbiguity<S> extends true
-      ? string
-      : S
-    : string;
+export type NormalizeURL<S extends string> =
+  IsStringLiteral<S> extends true ? (HasNormalizeAmbiguity<S> extends true ? string : S) : string;
 
 /**
  * Type-level result for `resolveURL(base, ...inputs)`. If no additional
@@ -408,8 +386,8 @@ export type NormalizeURL<S extends string>
  * / empty segments are filtered by `isNonEmptyURL` at runtime, so the base
  * survives untouched.
  */
-export type ResolveURL<Base extends string, Inputs extends readonly string[]>
-  = IsStringLiteral<Base> extends true
+export type ResolveURL<Base extends string, Inputs extends readonly string[]> =
+  IsStringLiteral<Base> extends true
     ? Inputs extends readonly []
       ? Base
       : AllInputsEmpty<Inputs> extends true
@@ -417,17 +395,16 @@ export type ResolveURL<Base extends string, Inputs extends readonly string[]>
         : string
     : string;
 
-type AllInputsEmpty<Inputs extends readonly string[]>
-  = Inputs extends readonly [infer Head, ...infer Tail extends readonly string[]]
-    ? Head extends ""
-      ? AllInputsEmpty<Tail>
-      : false
-    : true;
+type AllInputsEmpty<Inputs extends readonly string[]> = Inputs extends readonly [
+  infer Head,
+  ...infer Tail extends readonly string[],
+]
+  ? Head extends ""
+    ? AllInputsEmpty<Tail>
+    : false
+  : true;
 
-type SplitHostPath<
-  S extends string,
-  Host extends string = "",
-> = S extends `${infer C}${infer Rest}`
+type SplitHostPath<S extends string, Host extends string = ""> = S extends `${infer C}${infer Rest}`
   ? C extends "/" | "?" | "#"
     ? [Host, S]
     : SplitHostPath<Rest, `${Host}${C}`>
@@ -447,32 +424,28 @@ type ParseSearch<S extends string> = S extends `${infer Path}?${infer Q}`
  * `scheme://host/path?search#hash` shape (no auth); degrades to the base
  * `ParsedURLBase` for anything more exotic (auth, special/relative protocols).
  */
-export type ParseURL<S extends string>
-  = S extends `${infer Proto}://${infer Rest}`
-    ? Proto extends `${string}${"/" | "?" | "#" | ":" | " "}${string}`
-      ? ParsedURLBase
-      : SplitHostPath<Rest> extends [
-        infer Host extends string,
-        infer PathPart extends string,
-      ]
-        ? Host extends `${string}@${string}`
-          ? ParsedURLBase
-          : ParsePath<PathPart> extends {
-            pathname: infer P extends string;
-            search: infer Se extends string;
-            hash: infer H extends string;
-          }
-            ? {
-                protocol: `${Lowercase<Proto>}:`;
-                auth: "";
-                host: Host;
-                pathname: P;
-                search: Se;
-                hash: H;
-              }
-            : ParsedURLBase
-        : ParsedURLBase
-    : ParsedURLBase;
+export type ParseURL<S extends string> = S extends `${infer Proto}://${infer Rest}`
+  ? Proto extends `${string}${"/" | "?" | "#" | ":" | " "}${string}`
+    ? ParsedURLBase
+    : SplitHostPath<Rest> extends [infer Host extends string, infer PathPart extends string]
+      ? Host extends `${string}@${string}`
+        ? ParsedURLBase
+        : ParsePath<PathPart> extends {
+              pathname: infer P extends string;
+              search: infer Se extends string;
+              hash: infer H extends string;
+            }
+          ? {
+              protocol: `${Lowercase<Proto>}:`;
+              auth: "";
+              host: Host;
+              pathname: P;
+              search: Se;
+              hash: H;
+            }
+          : ParsedURLBase
+      : ParsedURLBase
+  : ParsedURLBase;
 
 /**
  * Widened `ParsedURL` shape used as the fallback for {@link ParseURL}. Kept in
@@ -509,14 +482,10 @@ export type ParseFilename<
     : undefined
   : undefined;
 
-type LastSegment<S extends string> = S extends `${string}/${infer Rest}`
-  ? LastSegment<Rest>
-  : S;
+type LastSegment<S extends string> = S extends `${string}/${infer Rest}` ? LastSegment<Rest> : S;
 
 /** Strip a single trailing colon, mirroring the runtime `.replace(/:$/, "")`. */
-type StripTrailingColon<S extends string> = S extends `${infer Head}:`
-  ? Head
-  : S;
+type StripTrailingColon<S extends string> = S extends `${infer Head}:` ? Head : S;
 
 /**
  * `true` when `S` contains any character the isScriptProtocol runtime
@@ -547,8 +516,8 @@ type ScriptSchemeName = "blob" | "data" | "javascript" | "vbscript";
  * whitespace or control-char handling — so a literal input can always be
  * resolved to a precise `true` / `false`.
  */
-export type IsSpecialScheme<S extends string>
-  = IsStringLiteral<S> extends true
+export type IsSpecialScheme<S extends string> =
+  IsStringLiteral<S> extends true
     ? Lowercase<StripTrailingColon<S>> extends SpecialSchemeName
       ? true
       : false
@@ -562,8 +531,8 @@ export type IsSpecialScheme<S extends string>
  * strips before the membership test. Note the runtime only strips a *trailing*
  * colon, so e.g. `"javascript:alert(1)"` is `false` (no trailing colon).
  */
-export type IsScriptProtocol<S extends string>
-  = IsStringLiteral<S> extends true
+export type IsScriptProtocol<S extends string> =
+  IsStringLiteral<S> extends true
     ? HasSchemeNoise<S> extends true
       ? boolean
       : Lowercase<StripTrailingColon<S>> extends ScriptSchemeName

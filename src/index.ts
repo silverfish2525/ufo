@@ -1,4 +1,3 @@
-// Public type-level helpers (extreme type-safety surface)
 export type {
   CleanDoubleSlashes,
   HasLeadingSlash,

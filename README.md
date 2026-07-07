@@ -12,7 +12,7 @@ URL utilities for humans — a **security-hardened, WHATWG-conformant, type-refi
 > issues are incorporated, and the [LICENSE](./LICENSE) file for the MIT
 > copyright (preserved verbatim).
 
-### What this fork adds
+## What this fork adds
 
 - **Strictest possible TypeScript**: return types are inferred down to
   the string literal — `joinURL("a", "/b")` is typed as `"a/b"`,
@@ -33,7 +33,8 @@ URL utilities for humans — a **security-hardened, WHATWG-conformant, type-refi
 - **New APIs**: `withHost`, `withPort`, `withoutPort`, `withoutAuth`,
   `withPathParameters`.
 - **Full drop-in compatibility**: 100 % additive — every upstream export
-  present with the same signature. CJS + ESM + `d.mts` + `d.cts` shipped.
+  present with the same signature. **ESM-only** (`dist/index.js` +
+  `dist/index.d.ts`) — see [v3.0.0 breaking notes](./CHANGELOG.md).
 
 ## Requirements
 
@@ -68,15 +69,19 @@ bun add better-ufo
 Import utils:
 
 ```js
-// ESM
-import { normalizeURL, joinURL } from "better-ufo";
-
-// CommonJS
-const { normalizeURL, joinURL } = require("better-ufo");
-
-// Deno
-import { parseURL } from "https://unpkg.com/better-ufo/dist/index.mjs";
+// ESM (Node 22+, browsers, Deno, Bun, workers, edge)
+import { joinURL, normalizeURL } from "better-ufo";
 ```
+
+```js
+// Deno
+import { parseURL } from "https://unpkg.com/better-ufo/dist/index.js";
+```
+
+> [!NOTE]
+> `better-ufo` is **ESM-only** as of v3.0.0. If you need CommonJS
+> `require()`, either use Node 22+ (which supports `require(esm)`) or
+> pin to `better-ufo@^2` (see [CHANGELOG](./CHANGELOG.md)).
 
 ### Drop-in replacement for `ufo`
 
@@ -88,9 +93,9 @@ without changing imports:
 {
   "pnpm": {
     "overrides": {
-      "ufo": "npm:better-ufo@^2"
-    }
-  }
+      "ufo": "npm:better-ufo@^2",
+    },
+  },
 }
 ```
 
@@ -218,17 +223,17 @@ You can use `{ acceptRelative: true }` to accept relative URLs as valid protocol
 **Example:**
 
 ```js
-hasProtocol('https://example.com'); // true
+hasProtocol("https://example.com"); // true
 
 hasProtocol("//example.com"); // false
 
-hasProtocol('//example.com', { acceptRelative: true });  // true
+hasProtocol("//example.com", { acceptRelative: true }); // true
 
 hasProtocol("ftp://example.com"); // true
 
-hasProtocol('data:text/plain'); // true
+hasProtocol("data:text/plain"); // true
 
-hasProtocol('data:text/plain', { strict: true }); // false
+hasProtocol("data:text/plain", { strict: true }); // false
 ```
 
 ### `hasTrailingSlash(input, respectQueryAndFragment?)`
@@ -324,18 +329,18 @@ withBase("//host/x", "/", { allowProtocolRelative: true }); // "//host/x"
 
 ### `withHost(input, host)`
 
-Sets or replaces the host authority slot, preserving `auth`, port, path, search, and hash. Relative inputs (no scheme, no leading `//`) are returned unchanged — `withHost` is a *replace* operator, not a promote-to-absolute* operator.
+Sets or replaces the host authority slot, preserving `auth`, port, path, search, and hash. Relative inputs (no scheme, no leading `//`) are returned unchanged — `withHost` is a _replace_ operator, not a promote-to-absolute\* operator.
 
 **Example:**
 
 ```js
-withHost("http://example.com/foo?x=1#h", "other.com")
+withHost("http://example.com/foo?x=1#h", "other.com");
 // Returns "http://other.com/foo?x=1#h"
 
-withHost("http://user:pw@example.com:8080/x", "new.com")
+withHost("http://user:pw@example.com:8080/x", "new.com");
 // Returns "http://user:pw@new.com:8080/x"    (auth + port preserved)
 
-withHost("/only/path", "example.com")
+withHost("/only/path", "example.com");
 // Returns "/only/path"                       (no-op on relative input)
 ```
 
@@ -354,10 +359,10 @@ Note: setting userinfo is intentionally not provided here. Userinfo is a securit
 **Example:**
 
 ```js
-withoutAuth("http://user:pw@example.com/x") // "http://example.com/x"
-withoutAuth("http://user@example.com/x")    // "http://example.com/x"
-withoutAuth("http://example.com/x")         // "http://example.com/x"
-withoutAuth("/relative/path")               // "/relative/path"
+withoutAuth("http://user:pw@example.com/x"); // "http://example.com/x"
+withoutAuth("http://user@example.com/x"); // "http://example.com/x"
+withoutAuth("http://example.com/x"); // "http://example.com/x"
+withoutAuth("/relative/path"); // "/relative/path"
 ```
 
 ### `withoutBase(input, base)`
@@ -385,9 +390,9 @@ Strips the port from an absolute URL's authority, leaving everything else untouc
 **Example:**
 
 ```js
-withoutPort("http://example.com:8080/x") // "http://example.com/x"
-withoutPort("http://example.com/x")      // "http://example.com/x"
-withoutPort("/relative/path")            // "/relative/path"
+withoutPort("http://example.com:8080/x"); // "http://example.com/x"
+withoutPort("http://example.com/x"); // "http://example.com/x"
+withoutPort("/relative/path"); // "/relative/path"
 ```
 
 ### `withoutProtocol(input)`
@@ -399,7 +404,7 @@ Removes the query string from a URL, preserving path and fragment.
 **Example:**
 
 ```js
-withoutQuery("https://a.com/b?x=1#h")
+withoutQuery("https://a.com/b?x=1#h");
 // Returns "https://a.com/b#h"
 ```
 
@@ -412,7 +417,7 @@ Substitutes path-parameter placeholders in a URL template with values from a par
 **Example:**
 
 ```js
-withPathParameters("/api/users/{userId}", { userId: "abc" })
+withPathParameters("/api/users/{userId}", { userId: "abc" });
 // → "/api/users/abc"
 
 withPathParameters("/api/users/{userId}/posts/{postId}", {
@@ -429,6 +434,7 @@ withPathParameters(
 );
 // → "/api/users/abc"
 ```
+
 Closes upstream unjs/ufo#243.
 
 ### `withPort(input, port)`
@@ -438,9 +444,9 @@ Sets or replaces the port slot. Accepts `string | number` for ergonomics. Passin
 **Example:**
 
 ```js
-withPort("http://example.com/x", 8080)   // "http://example.com:8080/x"
-withPort("http://example.com:80/x", 443) // "http://example.com:443/x"
-withPort("/only/path", 8080)             // "/only/path"  (no-op)
+withPort("http://example.com/x", 8080); // "http://example.com:8080/x"
+withPort("http://example.com:80/x", 443); // "http://example.com:443/x"
+withPort("/only/path", 8080); // "/only/path"  (no-op)
 ```
 
 ### `withProtocol(input, protocol)`

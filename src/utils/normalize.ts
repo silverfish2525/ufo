@@ -1,16 +1,5 @@
-import type {
-  CleanDoubleSlashes,
-  NormalizeURL,
-  Refine,
-  ResolveURL,
-} from "../_types";
-import {
-  decode,
-  decodePath,
-  encodeHash,
-  encodeHost,
-  encodePath,
-} from "../encoding";
+import type { CleanDoubleSlashes, NormalizeURL, Refine, ResolveURL } from "../_types";
+import { decode, decodePath, encodeHash, encodeHost, encodePath } from "../encoding";
 import { parseURL, stringifyParsedURL } from "../parse";
 import { parseQuery, stringifyQuery } from "../query";
 import { modifyParsedURL } from "./_modify";
@@ -31,9 +20,7 @@ import { withoutLeadingSlash, withTrailingSlash } from "./slash";
  *
  * @group utils
  */
-export function cleanDoubleSlashes<const S extends string>(
-  input: S,
-): CleanDoubleSlashes<S>;
+export function cleanDoubleSlashes<const S extends string>(input: S): CleanDoubleSlashes<S>;
 export function cleanDoubleSlashes(input?: string): string;
 export function cleanDoubleSlashes(input = ""): string {
   const qIdx = input.search(/[?#]/);
@@ -41,7 +28,7 @@ export function cleanDoubleSlashes(input = ""): string {
   const rest = qIdx === -1 ? "" : input.slice(qIdx);
   const cleaned = path
     .split("://")
-    .map(string_ => string_.replace(/\/{2,}/g, "/"))
+    .map((string_) => string_.replace(/\/{2,}/g, "/"))
     .join("://");
   return cleaned + rest;
 }
@@ -65,9 +52,7 @@ export function cleanDoubleSlashes(input = ""): string {
  *
  * @group utils
  */
-export function normalizeURL<const S extends string>(
-  input: S,
-): Refine<S, NormalizeURL<S>>;
+export function normalizeURL<const S extends string>(input: S): Refine<S, NormalizeURL<S>>;
 export function normalizeURL(input: string): string;
 export function normalizeURL(input: string): string {
   return modifyParsedURL(input, (parsed) => {
@@ -90,10 +75,10 @@ export function normalizeURL(input: string): string {
  *
  * @group utils
  */
-export function resolveURL<
-  const Base extends string,
-  const Inputs extends readonly string[],
->(base: Base, ...inputs: Inputs): Refine<Base, ResolveURL<Base, Inputs>>;
+export function resolveURL<const Base extends string, const Inputs extends readonly string[]>(
+  base: Base,
+  ...inputs: Inputs
+): Refine<Base, ResolveURL<Base, Inputs>>;
 export function resolveURL(base?: string, ...inputs: string[]): string;
 export function resolveURL(base = "", ...inputs: string[]): string {
   if (typeof base !== "string") {
@@ -102,7 +87,7 @@ export function resolveURL(base = "", ...inputs: string[]): string {
     );
   }
 
-  const filteredInputs = inputs.filter(input => isNonEmptyURL(input));
+  const filteredInputs = inputs.filter((input) => isNonEmptyURL(input));
 
   if (filteredInputs.length === 0) {
     return base;
@@ -115,9 +100,7 @@ export function resolveURL(base = "", ...inputs: string[]): string {
 
     // Append path
     if (urlSegment.pathname) {
-      url.pathname
-        = withTrailingSlash(url.pathname)
-          + withoutLeadingSlash(urlSegment.pathname);
+      url.pathname = withTrailingSlash(url.pathname) + withoutLeadingSlash(urlSegment.pathname);
     }
 
     // Override hash
@@ -133,8 +116,7 @@ export function resolveURL(base = "", ...inputs: string[]): string {
           ...parseQuery(urlSegment.search),
         });
         url.search = queryString.length > 0 ? `?${queryString}` : "";
-      }
-      else {
+      } else {
         url.search = urlSegment.search;
       }
     }

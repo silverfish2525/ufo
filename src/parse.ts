@@ -1,9 +1,4 @@
-import type {
-  ParseFilename,
-  ParsePath as ParsePathType,
-  ParseURL,
-  Refine,
-} from "./_types";
+import type { ParseFilename, ParsePath as ParsePathType, ParseURL, Refine } from "./_types";
 import { decode } from "./encoding";
 import { hasProtocol, isScriptProtocol, isSpecialScheme } from "./utils";
 
@@ -32,9 +27,7 @@ export interface ParsedHost {
   port: string | undefined;
 }
 
-export function parseURL<const S extends string>(
-  input: S,
-): Refine<S, ParseURL<S>, ParsedURL>;
+export function parseURL<const S extends string>(input: S): Refine<S, ParseURL<S>, ParsedURL>;
 /**
  * Takes a URL string and returns an object with the URL's `protocol`, `auth`, `host`, `pathname`, `search`, and `hash`.
  *
@@ -77,14 +70,14 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
   }
 
   if (!hasProtocol(input, { acceptRelative: true })) {
-    return (defaultProto !== undefined && defaultProto !== "") ? parseURL(defaultProto + input) : parsePath(input);
+    return defaultProto !== undefined && defaultProto !== ""
+      ? parseURL(defaultProto + input)
+      : parsePath(input);
   }
 
   // Opaque-scheme URIs: `scheme:` NOT followed by `//` (RFC 3986 §3).
   // Handles mailto:, tel:, urn:, data:, blob:, etc.
-  const _opaqueMatch = input.match(
-    /^[\s\0]*([A-Z][A-Z0-9+.-]*:)(?!\/\/)(.*)/i,
-  );
+  const _opaqueMatch = input.match(/^[\s\0]*([A-Z][A-Z0-9+.-]*:)(?!\/\/)(.*)/i);
   if (_opaqueMatch) {
     const [, _proto = "", _rest = ""] = _opaqueMatch;
     const { pathname, search, hash } = parsePath(_rest);
@@ -103,12 +96,11 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
   const _isSpecial = isSpecialScheme(_schemeForCheck);
   const _normalized = _isSpecial ? input.replace(/\\/g, "/") : input;
 
-  const [, protocol = "", authorityAndPath = ""]
-    = _normalized.match(/^[\s\0]*([A-Z][\s\w\0+.-]*:)?\/\/(.*)/i) || [];
+  const [, protocol = "", authorityAndPath = ""] =
+    _normalized.match(/^[\s\0]*([A-Z][\s\w\0+.-]*:)?\/\/(.*)/i) || [];
 
   const _termIdx = authorityAndPath.search(/[/?#]/);
-  const _authoritySlice
-    = _termIdx === -1 ? authorityAndPath : authorityAndPath.slice(0, _termIdx);
+  const _authoritySlice = _termIdx === -1 ? authorityAndPath : authorityAndPath.slice(0, _termIdx);
   const _pathSlice = _termIdx === -1 ? "" : authorityAndPath.slice(_termIdx);
   const _lastAtInAuthority = _authoritySlice.lastIndexOf("@");
 
@@ -116,14 +108,15 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
   let hostAndPath = "";
   if (_lastAtInAuthority === -1) {
     hostAndPath = authorityAndPath;
-  }
-  else {
+  } else {
     const _rawUserinfo = _authoritySlice.slice(0, _lastAtInAuthority);
     auth = _rawUserinfo.replace(/@/g, "%40");
     hostAndPath = _authoritySlice.slice(_lastAtInAuthority + 1) + _pathSlice;
   }
 
-  let [, host = "", path = ""] = hostAndPath.match(/([^#/?]*)(.*)/s) ?? [];
+  const match = hostAndPath.match(/([^#/?]*)(.*)/s) ?? [];
+  const host = match[1] ?? "";
+  let path = match[2] ?? "";
 
   if (protocol === "file:") {
     path = path.replace(/\/(?=[A-Z]:)/i, "");
@@ -270,9 +263,7 @@ export function parseHost(input = ""): ParsedHost {
 export function stringifyParsedURL(parsed: Partial<ParsedURL>): string {
   const pathname = parsed.pathname ?? "";
   const rawSearch = parsed.search ?? "";
-  const search = rawSearch !== ""
-    ? (rawSearch.startsWith("?") ? "" : "?") + rawSearch
-    : "";
+  const search = rawSearch !== "" ? (rawSearch.startsWith("?") ? "" : "?") + rawSearch : "";
   const hash = parsed.hash ?? "";
   const rawAuth = parsed.auth ?? "";
   const auth = rawAuth !== "" ? `${rawAuth}@` : "";
@@ -281,8 +272,7 @@ export function stringifyParsedURL(parsed: Partial<ParsedURL>): string {
   let proto = "";
   if (parsed.protocol !== undefined && parsed.protocol !== "") {
     proto = parsed.protocol + (hasAuthority ? "//" : "");
-  }
-  else if (parsed[protocolRelative] === true) {
+  } else if (parsed[protocolRelative] === true) {
     proto = "//";
   }
   return proto + auth + host + pathname + search + hash;
@@ -312,21 +302,12 @@ const FILENAME_REGEX = /(?:^|\/)([^/]+)$/;
  * @param [opts] - Options.
  * @param [opts.strict] - Only return filename if it has an extension.
  */
-export function parseFilename<
-  const S extends string,
-  const Strict extends boolean = false,
->(
+export function parseFilename<const S extends string, const Strict extends boolean = false>(
   input: S,
   opts?: { strict?: Strict },
 ): Refine<S, ParseFilename<S, Strict>, string | undefined>;
-export function parseFilename(
-  input?: string,
-  opts?: { strict?: boolean },
-): string | undefined;
-export function parseFilename(
-  input = "",
-  opts?: { strict?: boolean },
-): string | undefined {
+export function parseFilename(input?: string, opts?: { strict?: boolean }): string | undefined;
+export function parseFilename(input = "", opts?: { strict?: boolean }): string | undefined {
   const { pathname } = parseURL(input);
   const matches = opts?.strict
     ? pathname.match(FILENAME_STRICT_REGEX)

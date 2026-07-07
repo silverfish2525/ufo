@@ -13,15 +13,13 @@ import { hasProtocol } from "./protocol";
  *
  * @group utils
  */
-export function withoutHost<const S extends string>(
-  input: S,
-): Refine<S, WithoutHost<S>>;
+export function withoutHost<const S extends string>(input: S): Refine<S, WithoutHost<S>>;
 export function withoutHost(input: string): string;
 export function withoutHost(input: string): string {
   if (
-    !hasProtocol(input, { acceptRelative: true })
-    && input.length > 0
-    && (input[0] === "/" || input[0] === "?" || input[0] === "#")
+    !hasProtocol(input, { acceptRelative: true }) &&
+    input.length > 0 &&
+    (input[0] === "/" || input[0] === "?" || input[0] === "#")
   ) {
     return input[0] === "/" ? input : `/${input}`;
   }
@@ -31,9 +29,9 @@ export function withoutHost(input: string): string {
 
 function hasNoAuthoritySlot(input: string): boolean {
   return (
-    !hasProtocol(input, { acceptRelative: true })
-    && input.length > 0
-    && (input[0] === "/" || input[0] === "?" || input[0] === "#")
+    !hasProtocol(input, { acceptRelative: true }) &&
+    input.length > 0 &&
+    (input[0] === "/" || input[0] === "?" || input[0] === "#")
   );
 }
 
@@ -99,8 +97,8 @@ function validatePort(port: string | number): string {
   const n = typeof port === "number" ? port : Number(port);
   if (!Number.isInteger(n) || n < 1 || n > 65_535) {
     throw new TypeError(
-      `withPort: expected integer in [1, 65535], got ${JSON.stringify(port)}. `
-      + `Use withoutPort() to strip the port.`,
+      `withPort: expected integer in [1, 65535], got ${JSON.stringify(port)}. ` +
+        `Use withoutPort() to strip the port.`,
     );
   }
   return String(n);
@@ -125,10 +123,10 @@ export function withoutPort(input: string): string {
   }
   const parsed = parseURL(input);
   const host = parsed.host;
-  if (host === "") {
+  if (host === undefined || host === "") {
     return input;
   }
-  parsed.host = host!.replace(/(\]|[^:](?::\d+)?):\d+$/, (_m, p1: string) => p1);
+  parsed.host = host.replace(/(\]|[^:](?::\d+)?):\d+$/, (_m, p1: string) => p1);
   return stringifyParsedURL(parsed);
 }
 

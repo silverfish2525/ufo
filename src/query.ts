@@ -1,19 +1,15 @@
 import type { StringifyQueryItem, StringifyQueryResult } from "./_types";
-import {
-  decodeQueryKey,
-  decodeQueryValue,
-  encodeQueryKey,
-  encodeQueryValue,
-} from "./encoding";
+import { decodeQueryKey, decodeQueryValue, encodeQueryKey, encodeQueryValue } from "./encoding";
 
-export type QueryValue
-  = | string
-    | number
-    | undefined
-    | null
-    | boolean
-    | Array<QueryValue>
-    | Record<string, any>;
+export type QueryValue =
+  | string
+  | number
+  | undefined
+  | null
+  | boolean
+  | Array<QueryValue>
+  // oxlint-disable-next-line typescript/no-explicit-any -- `unknown` breaks literal-preserving key ordering in type-level tests
+  | Record<string, any>;
 
 export type QueryObject = Record<string, QueryValue | QueryValue[]>;
 
@@ -22,17 +18,9 @@ const AMPERSAND_CHAR_CODE = 38;
 const EQUAL_CHAR_CODE = 61;
 
 // Blocks prototype-pollution (PR #289 by @pi0, PR #331 by @saripovdenis).
-const DANGEROUS_KEYS: ReadonlySet<string> = new Set([
-  "__proto__",
-  "constructor",
-  "prototype",
-]);
+const DANGEROUS_KEYS: ReadonlySet<string> = new Set(["__proto__", "constructor", "prototype"]);
 
-function appendQueryParameter(
-  object: ParsedQuery,
-  rawKey: string,
-  rawValue: string,
-): void {
+function appendQueryParameter(object: ParsedQuery, rawKey: string, rawValue: string): void {
   const key = decodeQueryKey(rawKey);
   if (DANGEROUS_KEYS.has(key)) {
     return;
@@ -41,11 +29,9 @@ function appendQueryParameter(
   const existing = object[key];
   if (existing === undefined) {
     object[key] = value;
-  }
-  else if (Array.isArray(existing)) {
+  } else if (Array.isArray(existing)) {
     existing.push(value);
-  }
-  else {
+  } else {
     object[key] = [existing, value];
   }
 }
@@ -72,26 +58,20 @@ function appendQueryParameter(
  *
  * @group Query_utils
  */
-export function parseQuery<T extends ParsedQuery = ParsedQuery>(
-  parametersString?: string,
-): T;
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
+export function parseQuery<T extends ParsedQuery = ParsedQuery>(parametersString?: string): T;
 export function parseQuery(parametersString?: string): ParsedQuery;
 export function parseQuery(parametersString = ""): ParsedQuery {
   // TODO(v2): Use EmptyObject() for better perf (see unjs/ufo#290).
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.create(null) returns any; intentional for prototype-pollution safety
   const object = Object.create(null) as ParsedQuery;
   let keyStart = -1;
   let keyEnd = -1;
   const stringLength = parametersString.length;
 
-  for (
-    let index = parametersString[0] === "?" ? 1 : 0;
-    index <= stringLength;
-    index++
-  ) {
+  for (let index = parametersString[0] === "?" ? 1 : 0; index <= stringLength; index++) {
     const isEnd = index === stringLength;
-    const character = isEnd
-      ? AMPERSAND_CHAR_CODE
-      : parametersString.charCodeAt(index);
+    const character = isEnd ? AMPERSAND_CHAR_CODE : parametersString.charCodeAt(index);
 
     if (character === AMPERSAND_CHAR_CODE) {
       if (keyStart !== -1) {
@@ -100,13 +80,8 @@ export function parseQuery(parametersString = ""): ParsedQuery {
           parametersString.slice(keyStart, keyEnd === -1 ? index : keyEnd),
           keyEnd === -1 ? "" : parametersString.slice(keyEnd + 1, index),
         );
-      }
-      else if (keyEnd !== -1) {
-        appendQueryParameter(
-          object,
-          "",
-          parametersString.slice(keyEnd + 1, index),
-        );
+      } else if (keyEnd !== -1) {
+        appendQueryParameter(object, "", parametersString.slice(keyEnd + 1, index));
       }
       keyStart = -1;
       keyEnd = -1;
@@ -145,18 +120,12 @@ export function parseQuery(parametersString = ""): ParsedQuery {
  *
  * @group Query_utils
  */
-export function encodeQueryItem<
-  const K extends string,
-  const V extends QueryValue | QueryValue[],
->(key: K, value: V): StringifyQueryItem<K, V>;
-export function encodeQueryItem(
-  key: string,
-  value: QueryValue | QueryValue[],
-): string;
-export function encodeQueryItem(
-  key: string,
-  value: QueryValue | QueryValue[],
-): string {
+export function encodeQueryItem<const K extends string, const V extends QueryValue | QueryValue[]>(
+  key: K,
+  value: V,
+): StringifyQueryItem<K, V>;
+export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): string;
+export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): string {
   if (typeof value === "number" || typeof value === "boolean") {
     value = String(value);
   }
@@ -196,9 +165,7 @@ export function encodeQueryItem(
  *
  * @group Query_utils
  */
-export function stringifyQuery<const T extends QueryObject>(
-  query: T,
-): StringifyQueryResult<T>;
+export function stringifyQuery<const T extends QueryObject>(query: T): StringifyQueryResult<T>;
 export function stringifyQuery(query: QueryObject): string;
 export function stringifyQuery(query: QueryObject): string {
   // Single-pass builder (PR #333 by @saripovdenis).

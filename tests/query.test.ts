@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import {
   encodeQueryItem,
   filterQuery,
@@ -49,7 +49,7 @@ describe("withQuery", () => {
     { input: "http://a.com?v=1", query: { x: 2 }, out: "http://a.com?v=1&x=2" },
     {
       input: "/",
-      query: { json: "{\"test\":[\"content\"]}" },
+      query: { json: '{"test":["content"]}' },
       out: "/?json=%7B%22test%22%3A%5B%22content%22%5D%7D",
     },
     { input: "/", query: { param: ["3", ""] }, out: "/?param=3&param=" },
@@ -71,17 +71,19 @@ describe("withQuery", () => {
     },
     {
       input: "/",
-      query: { "a": "X", "b[]": [], "c": "Y" },
+      query: { a: "X", "b[]": [], c: "Y" },
       out: "/?a=X&c=Y",
     },
   ];
 
   for (const t of tests) {
-    it(`${t.input.toString()} with ${JSON.stringify(t.query)}`, () => {
+    it(`${t.input} with ${JSON.stringify(t.query)}`, () => {
       expect(withQuery(t.input, t.query)).toBe(t.out);
     });
   }
 });
+
+const filterOutBar = (key: string): boolean => key !== "bar";
 
 describe("filterQuery", () => {
   const tests = [
@@ -89,17 +91,16 @@ describe("filterQuery", () => {
     { input: "/foo?bar=1", out: "/foo" },
     { input: "/foo?bar=1&baz=2", out: "/foo?baz=2" },
   ];
-  const predicate = (key: string) => key !== "bar";
 
   for (const t of tests) {
-    it(`${t.input.toString()} filter "bar"`, () => {
-      expect(filterQuery(t.input, predicate)).toBe(t.out);
+    it(`${t.input} filter "bar"`, () => {
+      expect(filterQuery(t.input, filterOutBar)).toBe(t.out);
     });
   }
 });
 
 describe("getQuery", () => {
-  const tests = {
+  const tests: Record<string, object> = {
     "http://foo.com/foo?test=123&unicode=%E5%A5%BD": {
       test: "123",
       unicode: "好",
@@ -109,16 +110,14 @@ describe("getQuery", () => {
     "http://foo.com/?param=": { param: "" },
     "http://foo.com/?param=&param=2&param=3": { param: ["", "2", "3"] },
     "http://foo.com/?param=%7B%22a%22:%5B%7B%22obj%22:%5B1,2,3%5D%7D%5D%7D": {
-      param: "{\"a\":[{\"obj\":[1,2,3]}]}",
+      param: '{"a":[{"obj":[1,2,3]}]}',
     },
     "http://foo.com/?toString=foo": { toString: "foo" },
   };
 
-  for (const t in tests) {
-    it(t, () => {
-      expect(getQuery(t)).toMatchObject((tests as Record<string, object>)[t]!);
-    });
-  }
+  it.each(Object.entries(tests))("%s", (input, expected) => {
+    expect(getQuery(input)).toMatchObject(expected);
+  });
 });
 
 describe("parseQuery", () => {
@@ -157,7 +156,7 @@ describe("parseQuery", () => {
   // Upstream PR #331 + issue #355: preserve empty-key parameters (`=value`).
   it("preserves empty-key parameters (=value → { '': 'value' })", () => {
     expect(parseQuery("=b")).toEqual({ "": "b" });
-    expect(parseQuery("a=1&=b")).toEqual({ "a": "1", "": "b" });
+    expect(parseQuery("a=1&=b")).toEqual({ a: "1", "": "b" });
     expect(parseQuery("==")).toEqual({ "": "=" });
   });
 
@@ -171,9 +170,7 @@ describe("parseQuery", () => {
     expect(Object.getPrototypeOf(parseQuery("a=1"))).toBe(null);
   });
   it("ignores dangerous keys (__proto__, constructor, prototype)", () => {
-    const q = parseQuery(
-      "__proto__=x&%5F%5Fproto%5F%5F=y&constructor=z&prototype=w&safe=ok",
-    );
+    const q = parseQuery("__proto__=x&%5F%5Fproto%5F%5F=y&constructor=z&prototype=w&safe=ok");
     expect(Object.hasOwn(q, "__proto__")).toBe(false);
     expect(Object.hasOwn(q, "constructor")).toBe(false);
     expect(Object.hasOwn(q, "prototype")).toBe(false);
@@ -245,18 +242,16 @@ describe("filterQuery prototype", () => {
 });
 
 describe("filterQuery — extended", () => {
-  it("/x?utm_source=a&keep=1 filter \"utm_source\"", () => {
-    expect(
-      filterQuery("/x?utm_source=a&keep=1", k => k !== "utm_source"),
-    ).toBe("/x?keep=1");
+  it('/x?utm_source=a&keep=1 filter "utm_source"', () => {
+    expect(filterQuery("/x?utm_source=a&keep=1", (k) => k !== "utm_source")).toBe("/x?keep=1");
   });
 
-  it("/x?a=&b=1 filter empty-string values (v !== \"\")", () => {
+  it('/x?a=&b=1 filter empty-string values (v !== "")', () => {
     // filterQuery value channel is `string | string[]`, never null; empty string is the "empty value" case.
     expect(filterQuery("/x?a=&b=1", (_, v) => v !== "")).toBe("/x?b=1");
   });
 
-  it("\"\" (empty input) round-trip", () => {
+  it('"" (empty input) round-trip', () => {
     expect(filterQuery("", () => true)).toBe("");
   });
 
@@ -269,7 +264,7 @@ describe("filterQuery — extended", () => {
 describe("filterQuery + withQuery — chained", () => {
   it("filterQuery then withQuery produces correct combined query", () => {
     const result = withQuery(
-      filterQuery("/x?keep=1&drop=2", k => k !== "drop"),
+      filterQuery("/x?keep=1&drop=2", (k) => k !== "drop"),
       { added: "1" },
     );
     expect(result).toBe("/x?keep=1&added=1");
@@ -278,10 +273,7 @@ describe("filterQuery + withQuery — chained", () => {
   it("email value survives filter+withQuery round-trip", () => {
     // Fork policy (WHATWG form-urlencoded): filterQuery/withQuery now percent-encode
     // sub-delimiter chars like `@` in the value slot, matching URLSearchParams output.
-    const filtered = filterQuery(
-      "/x?email=a%40b.com&drop=1",
-      k => k !== "drop",
-    );
+    const filtered = filterQuery("/x?email=a%40b.com&drop=1", (k) => k !== "drop");
     expect(filtered).toBe("/x?email=a%40b.com");
     const result = withQuery(filtered, { extra: "val" });
     expect(result).toBe("/x?email=a%40b.com&extra=val");
@@ -289,7 +281,7 @@ describe("filterQuery + withQuery — chained", () => {
 });
 
 describe("filterQuery — array-value predicate (characterization)", () => {
-  it("filterQuery(?a=1&a=2, (k,v) => v !== \"1\") — pin current behavior", () => {
+  it('filterQuery(?a=1&a=2, (k,v) => v !== "1") — pin current behavior', () => {
     // Probe on 6f7a318: filterQuery("?a=1&a=2", (k,v) => v !== "1") → "?a=1&a=2".
     // FIXME: value channel for repeated keys is `string[]`; the predicate receives ["1","2"],
     // so `v !== "1"` compares array to string — always true → filter keeps both entries.
@@ -300,7 +292,7 @@ describe("filterQuery — array-value predicate (characterization)", () => {
 });
 
 describe("withQuery — noop and idempotence", () => {
-  it("withQuery(\"/x\", {}) is a noop", () => {
+  it('withQuery("/x", {}) is a noop', () => {
     expect(withQuery("/x", {})).toBe("/x");
   });
 
@@ -310,7 +302,7 @@ describe("withQuery — noop and idempotence", () => {
     expect(r2).toBe(r1);
   });
 
-  it("withQuery(\"/x?a=1\", { a: \"1\" }) — same-value reassign pins current output", () => {
+  it('withQuery("/x?a=1", { a: "1" }) — same-value reassign pins current output', () => {
     // Probe on 6f7a318: withQuery("/x?a=1", { a: "1" }) → "/x?a=1"
     expect(withQuery("/x?a=1", { a: "1" })).toBe("/x?a=1");
   });

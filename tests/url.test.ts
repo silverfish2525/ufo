@@ -1,10 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { $URL, createURL } from "../src";
 
 describe("$URL", () => {
   it("getters", () => {
-    const inputURL
-      = "https://john:doe@example.com:1080/path?query=value&v=1&v=2#hash";
+    const inputURL = "https://john:doe@example.com:1080/path?query=value&v=1&v=2#hash";
     const url = new $URL(inputURL);
 
     expect(url.href).toEqual(inputURL);
@@ -25,7 +24,7 @@ describe("$URL", () => {
       username: "john",
       password: "doe",
       hasProtocol: 6,
-      isAbsolute: 6,
+      isAbsolute: true,
       search: "?query=value&v=1&v=2",
       origin: "https://example.com:1080",
       fullpath: "/path?query=value&v=1&v=2#hash",
@@ -34,9 +33,7 @@ describe("$URL", () => {
   });
 
   it("append", () => {
-    const url = new $URL(
-      "https://john:doe@example.com:1080/path?query=value#hash",
-    );
+    const url = new $URL("https://john:doe@example.com:1080/path?query=value#hash");
     const path = new $URL("/newpath?newquery=newvalue#newhash");
 
     url.append(path);
@@ -67,11 +64,11 @@ describe("$URL", () => {
       },
     ];
 
-    for (const t of tests) {
-      it(`${String(t.input)} throw`, () => {
-        expect(() => new $URL(t.input as string)).toThrow(new TypeError(String(t.out)));
-      });
-    }
+    it.each(tests)("$input throw", (t) => {
+      // @ts-expect-error - `tests` intentionally holds non-string inputs (null,
+      // number, plain object) to verify the constructor's runtime type-check.
+      expect(() => new $URL(t.input)).toThrow(new TypeError(t.out));
+    });
   });
 
   it("preserves multi-colon userinfo password and percent-encodes on serialization", () => {
@@ -142,9 +139,7 @@ describe("$URL — public-field mutation", () => {
   it("auth reassignment updates href", () => {
     const url = new $URL(BASE);
     url.auth = "user:pass";
-    expect(url.href).toBe(
-      "https://user:pass@example.com:1080/path?query=value#hash",
-    );
+    expect(url.href).toBe("https://user:pass@example.com:1080/path?query=value#hash");
     expect(url.toString()).toBe(url.href);
     expect(url.toJSON()).toBe(url.href);
   });
@@ -152,9 +147,7 @@ describe("$URL — public-field mutation", () => {
   it("pathname reassignment updates href", () => {
     const url = new $URL(BASE);
     url.pathname = "/new";
-    expect(url.href).toBe(
-      "https://john:doe@example.com:1080/new?query=value#hash",
-    );
+    expect(url.href).toBe("https://john:doe@example.com:1080/new?query=value#hash");
     expect(url.toString()).toBe(url.href);
     expect(url.toJSON()).toBe(url.href);
   });
@@ -162,16 +155,16 @@ describe("$URL — public-field mutation", () => {
   it("hash reassignment updates href", () => {
     const url = new $URL(BASE);
     url.hash = "#new";
-    expect(url.href).toBe(
-      "https://john:doe@example.com:1080/path?query=value#new",
-    );
+    expect(url.href).toBe("https://john:doe@example.com:1080/path?query=value#new");
     expect(url.toString()).toBe(url.href);
     expect(url.toJSON()).toBe(url.href);
   });
 
   it("query mutation via property-set is reflected in href", () => {
     const url = new $URL("https://example.com/x?a=1");
-    (url.query as Record<string, string>)["b"] = "2";
+    // @ts-expect-error - test probes runtime behavior of assigning a new key
+    // to url.query; the declared type does not expose an index signature.
+    url.query.b = "2";
     expect(url.href).toBe("https://example.com/x?a=1&b=2");
     expect(url.search).toBe("?a=1&b=2");
   });
@@ -204,11 +197,13 @@ describe("$URL — getter-only surface", () => {
 
   for (const prop of getterOnlyProps) {
     it(`${prop} is getter-only`, () => {
-      const desc
-        = Object.getOwnPropertyDescriptor($URL.prototype, prop)
-          ?? Object.getOwnPropertyDescriptor(new $URL("https://a.com"), prop);
+      const desc =
+        Object.getOwnPropertyDescriptor($URL.prototype, prop) ??
+        Object.getOwnPropertyDescriptor(new $URL("https://a.com"), prop);
+      expect(desc).toBeDefined();
+      // eslint-disable-next-line typescript/unbound-method
       expect(desc?.set).toBeUndefined();
-
+      // eslint-disable-next-line typescript/unbound-method
       expect(typeof desc?.get).toBe("function");
     });
   }

@@ -8,19 +8,13 @@ import { withTrailingSlash } from "./slash";
 const JOIN_LEADING_SLASH_RE = /^\.?\//;
 const JOIN_SEGMENT_SPLIT_RE = /\/(?!\/)/;
 
-export function joinURL<
-  const Base extends string,
-  const Rest extends readonly string[],
->(base: Base, ...input: Rest): JoinURLResult<Base, Rest>;
+export function joinURL<const Base extends string, const Rest extends readonly string[]>(
+  base: Base,
+  ...input: Rest
+): JoinURLResult<Base, Rest>;
 export function joinURL(base: string, ...input: string[]): string;
-export function joinURL(
-  base: string,
-  ...input: [...string[], JoinURLOptions]
-): string;
-export function joinURL(
-  base: string,
-  ...input: Array<string | JoinURLOptions>
-): string {
+export function joinURL(base: string, ...input: [...string[], JoinURLOptions]): string;
+export function joinURL(base: string, ...input: Array<string | JoinURLOptions>): string {
   let opts: JoinURLOptions | undefined;
   const last = input.at(-1);
   if (last !== null && typeof last === "object" && !Array.isArray(last)) {
@@ -30,15 +24,14 @@ export function joinURL(
 
   const segments = input
     .filter((v): v is string => typeof v === "string")
-    .filter(url => isNonEmptyURL(url));
+    .filter((url) => isNonEmptyURL(url));
   let url = base || "";
 
   for (const segment of segments) {
     if (url) {
       const _segment = segment.replace(JOIN_LEADING_SLASH_RE, "");
       url = withTrailingSlash(url) + _segment;
-    }
-    else {
+    } else {
       url = segment;
     }
   }
@@ -57,10 +50,10 @@ export function joinURL(
  *
  * @group utils
  */
-export function joinRelativeURL<
-  const Base extends string,
-  const Rest extends readonly string[],
->(base: Base, ...input: Rest): JoinRelativeURLResult<Base, Rest>;
+export function joinRelativeURL<const Base extends string, const Rest extends readonly string[]>(
+  base: Base,
+  ...input: Rest
+): JoinRelativeURLResult<Base, Rest>;
 export function joinRelativeURL(..._input: string[]): string;
 export function joinRelativeURL(..._input: string[]): string {
   const input = _input.filter(Boolean);
@@ -100,12 +93,10 @@ export function joinRelativeURL(..._input: string[]): string {
   if (segmentsDepth >= 0) {
     if (input[0]?.startsWith("/") && !url.startsWith("/")) {
       url = `/${url}`;
-    }
-    else if (input[0]?.startsWith("./") && !url.startsWith("./")) {
+    } else if (input[0]?.startsWith("./") && !url.startsWith("./")) {
       url = `./${url}`;
     }
-  }
-  else {
+  } else {
     url = "../".repeat(-1 * segmentsDepth) + url;
   }
 

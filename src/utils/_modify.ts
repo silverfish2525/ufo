@@ -3,10 +3,7 @@ import type { JoinURLOptions } from "./protocol";
 import { parseURL, stringifyParsedURL } from "../parse";
 import { hasProtocol } from "./protocol";
 
-export function modifyParsedURL(
-  input: string,
-  fn: (parsed: ParsedURL) => void,
-): string {
+export function modifyParsedURL(input: string, fn: (parsed: ParsedURL) => void): string {
   const parsed = parseURL(input);
   fn(parsed);
   return stringifyParsedURL(parsed);

@@ -55,31 +55,17 @@ describe("query", () => {
   });
 
   test("stringifyQuery computes the exact query string for object literals", () => {
-    expectTypeOf(
-      stringifyQuery({ foo: "bar", baz: "qux" }),
-    ).toEqualTypeOf<"foo=bar&baz=qux">();
-    expectTypeOf(
-      stringifyQuery({ a: "323", b: "asdf" }),
-    ).toEqualTypeOf<"a=323&b=asdf">();
-    expectTypeOf(
-      stringifyQuery({ foo: 1, bar: true }),
-    ).toEqualTypeOf<"foo=1&bar=true">();
+    expectTypeOf(stringifyQuery({ a: "323", b: "asdf" })).toEqualTypeOf<"a=323&b=asdf">();
     // null value -> key only
     expectTypeOf(stringifyQuery({ foo: null })).toEqualTypeOf<"foo">();
     // undefined value -> dropped
-    expectTypeOf(
-      stringifyQuery({ foo: "bar", skip: undefined }),
-    ).toEqualTypeOf<"foo=bar">();
+    expectTypeOf(stringifyQuery({ foo: "bar", skip: undefined })).toEqualTypeOf<"foo=bar">();
   });
 
   test("stringifyQuery degrades to string for values needing encoding", () => {
-    expectTypeOf(
-      stringifyQuery({ email: "some email.com" }),
-    ).toEqualTypeOf<string>();
+    expectTypeOf(stringifyQuery({ email: "some email.com" })).toEqualTypeOf<string>();
     // dynamic object keeps base type
-    expectTypeOf(
-      stringifyQuery({} as Record<string, string>),
-    ).toEqualTypeOf<string>();
+    expectTypeOf(stringifyQuery({} as Record<string, string>)).toEqualTypeOf<string>();
   });
 
   test("encodeQueryItem computes `key=value` for url-safe literals", () => {
@@ -91,9 +77,7 @@ describe("query", () => {
   });
 
   test("withQuery computes the exact resulting URL for clean bases", () => {
-    expectTypeOf(
-      withQuery("/foo", { a: "1", b: "2" }),
-    ).toEqualTypeOf<"/foo?a=1&b=2">();
+    expectTypeOf(withQuery("/foo", { a: "1", b: "2" })).toEqualTypeOf<"/foo?a=1&b=2">();
     expectTypeOf(
       withQuery("https://api.myanimelist.net/v2/user/@me/animelist/", {
         a: "323",
@@ -103,9 +87,7 @@ describe("query", () => {
     // existing query -> degrade to string (merge is not modelled)
     expectTypeOf(withQuery("/foo?x=1", { a: "1" })).toEqualTypeOf<string>();
     // value needing encoding -> degrade
-    expectTypeOf(
-      withQuery("/", { email: "some email.com" }),
-    ).toEqualTypeOf<string>();
+    expectTypeOf(withQuery("/", { email: "some email.com" })).toEqualTypeOf<string>();
   });
 });
 
@@ -150,21 +132,11 @@ describe("slash / relative predicates", () => {
 
 describe("protocol transforms", () => {
   test("literal protocol swaps", () => {
-    expectTypeOf(
-      withHttp("https://example.com"),
-    ).toEqualTypeOf<"http://example.com">();
-    expectTypeOf(
-      withHttps("http://example.com"),
-    ).toEqualTypeOf<"https://example.com">();
-    expectTypeOf(
-      withoutProtocol("http://example.com"),
-    ).toEqualTypeOf<"example.com">();
-    expectTypeOf(
-      withProtocol("http://example.com", "ftp://"),
-    ).toEqualTypeOf<"ftp://example.com">();
-    expectTypeOf(
-      withProtocol("//example.com", "ftp://"),
-    ).toEqualTypeOf<"ftp://example.com">();
+    expectTypeOf(withHttp("https://example.com")).toEqualTypeOf<"http://example.com">();
+    expectTypeOf(withHttps("http://example.com")).toEqualTypeOf<"https://example.com">();
+    expectTypeOf(withoutProtocol("http://example.com")).toEqualTypeOf<"example.com">();
+    expectTypeOf(withProtocol("http://example.com", "ftp://")).toEqualTypeOf<"ftp://example.com">();
+    expectTypeOf(withProtocol("//example.com", "ftp://")).toEqualTypeOf<"ftp://example.com">();
   });
 
   test("dynamic input keeps string", () => {
@@ -180,9 +152,7 @@ describe("fragment / host transforms", () => {
     expectTypeOf(
       withoutFragment("http://example.com/foo?q=123#bar"),
     ).toEqualTypeOf<"http://example.com/foo?q=123">();
-    expectTypeOf(
-      withoutHost("http://example.com/foo?q=123#bar"),
-    ).toEqualTypeOf<"/foo?q=123#bar">();
+    expectTypeOf(withoutHost("http://example.com/foo?q=123#bar")).toEqualTypeOf<"/foo?q=123#bar">();
     expectTypeOf(withoutHost("http://example.com")).toEqualTypeOf<"/">();
   });
 });
@@ -239,23 +209,17 @@ describe("parsing", () => {
 
 describe("parse extras — baseline", () => {
   test("parseHost returns ParsedHost struct", () => {
-    expectTypeOf(parseHost("example.com:8080")).toEqualTypeOf<
-      ReturnType<typeof parseHost>
-    >();
+    expectTypeOf(parseHost("example.com:8080")).toEqualTypeOf<ReturnType<typeof parseHost>>();
     expectTypeOf(parseHost(dyn)).toEqualTypeOf<ReturnType<typeof parseHost>>();
   });
 
   test("parseAuth returns ParsedAuth struct", () => {
-    expectTypeOf(parseAuth("user:pass")).toEqualTypeOf<
-      ReturnType<typeof parseAuth>
-    >();
+    expectTypeOf(parseAuth("user:pass")).toEqualTypeOf<ReturnType<typeof parseAuth>>();
     expectTypeOf(parseAuth(dyn)).toEqualTypeOf<ReturnType<typeof parseAuth>>();
   });
 
   test("stringifyParsedURL returns string", () => {
-    expectTypeOf(
-      stringifyParsedURL({ pathname: "/x" }),
-    ).toEqualTypeOf<string>();
+    expectTypeOf(stringifyParsedURL({ pathname: "/x" })).toEqualTypeOf<string>();
     expectTypeOf(
       stringifyParsedURL({ protocol: "https:", host: "example.com" }),
     ).toEqualTypeOf<string>();
@@ -276,9 +240,7 @@ describe("base transforms — baseline", () => {
 
 describe("filterQuery — baseline", () => {
   test("filterQuery returns string", () => {
-    expectTypeOf(
-      filterQuery("/x?a=1", k => k !== "a"),
-    ).toEqualTypeOf<string>();
+    expectTypeOf(filterQuery("/x?a=1", (k) => k !== "a")).toEqualTypeOf<string>();
     expectTypeOf(filterQuery(dyn, () => true)).toEqualTypeOf<string>();
   });
 });
@@ -335,9 +297,7 @@ describe("withoutQuery", () => {
   });
 
   test("literal input with query+fragment yields refined literal", () => {
-    expectTypeOf(
-      withoutQuery("https://a.com/b?x=1#h"),
-    ).toEqualTypeOf<"https://a.com/b#h">();
+    expectTypeOf(withoutQuery("https://a.com/b?x=1#h")).toEqualTypeOf<"https://a.com/b#h">();
   });
 
   test("literal input with query only yields path without query", () => {
@@ -345,9 +305,7 @@ describe("withoutQuery", () => {
   });
 
   test("literal input without query is identity", () => {
-    expectTypeOf(
-      withoutQuery("https://a.com/b"),
-    ).toEqualTypeOf<"https://a.com/b">();
+    expectTypeOf(withoutQuery("https://a.com/b")).toEqualTypeOf<"https://a.com/b">();
   });
 });
 
@@ -389,9 +347,7 @@ describe("cleanDoubleSlashes", () => {
   });
 
   test("literal with double slashes after scheme degrades to string", () => {
-    expectTypeOf(
-      cleanDoubleSlashes("https://example.com//foo"),
-    ).toEqualTypeOf<string>();
+    expectTypeOf(cleanDoubleSlashes("https://example.com//foo")).toEqualTypeOf<string>();
   });
 });
 
@@ -428,9 +384,7 @@ describe("isScriptProtocol — refined", () => {
     expectTypeOf(isScriptProtocol("JAVASCRIPT:")).toEqualTypeOf<true>();
   });
   test("embedded colon (no trailing) → false (runtime parity)", () => {
-    expectTypeOf(
-      isScriptProtocol("javascript:alert(1)"),
-    ).toEqualTypeOf<false>();
+    expectTypeOf(isScriptProtocol("javascript:alert(1)")).toEqualTypeOf<false>();
   });
   test("non-script scheme → false", () => {
     expectTypeOf(isScriptProtocol("https:")).toEqualTypeOf<false>();

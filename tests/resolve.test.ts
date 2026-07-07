@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { resolveURL } from "../src";
 
 describe("resolveURL", () => {
@@ -17,15 +17,13 @@ describe("resolveURL", () => {
   });
 
   it("invalid URL (null)", () => {
-    expect(() => resolveURL(null as any)).toThrow(
-      "URL input should be string received object (null)",
-    );
+    // @ts-expect-error - null rejected at runtime; test verifies the throw path.
+    expect(() => resolveURL(null)).toThrow("URL input should be string received object (null)");
   });
 
   it("invalid URL (array)", () => {
-    expect(() => resolveURL([] as unknown as string)).toThrow(
-      "URL input should be string received object ()",
-    );
+    // @ts-expect-error - array rejected at runtime; test verifies the throw path.
+    expect(() => resolveURL([])).toThrow("URL input should be string received object ()");
   });
 
   it("no arguments", () => {

@@ -1,9 +1,5 @@
-# CODEOWNERS — auto-request review on every PR
-
-# Default owner for everything
 *                            @silverfish2525
 
-# Security-sensitive surface
 /src/parse.ts                @silverfish2525
 /src/encoding.ts             @silverfish2525
 /src/query.ts                @silverfish2525
@@ -11,15 +7,12 @@
 /src/utils/base.ts           @silverfish2525
 /src/utils/normalize.ts      @silverfish2525
 
-# Type-level engine
 /src/_types.ts               @silverfish2525
 
-# Docs, credits, license
 /SECURITY.md                 @silverfish2525
 /LICENSE                     @silverfish2525
 /CREDITS.md                  @silverfish2525
 
-# Toolchain
 /package.json                @silverfish2525
 /tsconfig.json               @silverfish2525
 /.github/workflows/          @silverfish2525

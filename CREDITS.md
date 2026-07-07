@@ -42,14 +42,17 @@ Cite: `src/encoding.ts` (top-of-file rationale block).
 - **@JvanderHeide** — PR [#279](https://github.com/unjs/ufo/pull/279) (pipe)
 - **@yyz945947732** — PR [#288](https://github.com/unjs/ufo/pull/288) (semicolon)
 - **@byt3m4st3r** — PR [#303](https://github.com/unjs/ufo/pull/303) (backtick)
-- **@nianqingrenganmane** — PR [#305](https://github.com/unjs/ufo/pull/305) (`^`, backtick, `|`)
+- **@nianqingrenganmane** — PR [#305](https://github.com/unjs/ufo/pull/305)
+  (`^`, backtick, `|`)
 - **@ConnorBerghoffer** — PR [#310](https://github.com/unjs/ufo/pull/310) (backtick)
 - **@terminalchai** — PRs [#318](https://github.com/unjs/ufo/pull/318) (`?`)
   and [#327](https://github.com/unjs/ufo/pull/327) (`^` + backtick)
 - **@guoyangzhen** — PR [#324](https://github.com/unjs/ufo/pull/324) (caret + backtick)
 - **@mvtandas** — PR [#328](https://github.com/unjs/ufo/pull/328) (backtick keep-encoded)
-- **@armorbreak001** — PR [#329](https://github.com/unjs/ufo/pull/329) (backtick per RFC 1738)
-- **@LeSingh1** — PR [#354](https://github.com/unjs/ufo/pull/354) (`^`, backtick, `?`)
+- **@armorbreak001** — PR [#329](https://github.com/unjs/ufo/pull/329)
+  (backtick per RFC 1738)
+- **@LeSingh1** — PR [#354](https://github.com/unjs/ufo/pull/354)
+  (`^`, backtick, `?`)
 
 ### Bug fixes
 
@@ -64,13 +67,6 @@ Cite: `src/encoding.ts` (top-of-file rationale block).
 - **@Thy3634** — issue [#243](https://github.com/unjs/ufo/issues/243)
   (proposal for `withPathParameters`).
   Cite: `src/utils/path-parameters.ts`.
-
-## Fork-added work
-
-See [`advisor-plans/`](./advisor-plans) for the 21 self-authored
-plans (SEC hardening, type refinements, `with*` / `without*`
-symmetry, `withPathParameters`, knip + size-limit gates, WPT
-`urltestdata.json` ratchet) that go beyond upstream.
 
 ---
 

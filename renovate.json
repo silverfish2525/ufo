@@ -13,7 +13,14 @@
       "platformAutomerge": true
     },
     {
-      "matchPackageNames": ["vitest", "@vitest/coverage-v8", "typescript", "eslint", "@antfu/eslint-config", "tsdown"],
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/coverage-v8",
+        "typescript",
+        "eslint",
+        "@antfu/eslint-config",
+        "tsdown"
+      ],
       "automerge": false,
       "labels": ["needs-review"],
       "reviewers": ["silverfish2525"]

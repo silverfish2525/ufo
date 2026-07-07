@@ -8,9 +8,9 @@ import { withoutTrailingSlash } from "./slash";
 const URL_BOUNDARY_CHARS = new Set(["/", "?", "#"]);
 
 function isAtBaseBoundary(input: string, baseLen: number): boolean {
-  if (input.length === baseLen)
-    return true;
-  return URL_BOUNDARY_CHARS.has(input[baseLen]!);
+  if (input.length === baseLen) return true;
+  const char = input[baseLen];
+  return char !== undefined && URL_BOUNDARY_CHARS.has(char);
 }
 
 /**

@@ -2,18 +2,13 @@ name: ci
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
-# Node 20 was dropped in v1.6.4-fork.0 (2026-07): Node 20 is EOL (April 2026)
-# and our toolchain (tsdown / @antfu/eslint-config / eslint-plugin-unicorn)
-# hard-requires V8 Iterator Helpers, which only land in Node 22+.
-# The compiled output still targets ES2022, so downstream consumers who
-# somehow still run Node 20 will get an unsupported-engine warning but
-# the code executes; we simply don't validate it in CI.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   runtime:
@@ -21,20 +16,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [22, 24]
+        node: [22, 24, 26]
     steps:
-      - uses: actions/checkout@v6
-      - run: npm i -fg corepack && corepack enable
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: ${{ matrix.node }}
-          cache: pnpm
-      - run: pnpm install
-      - run: pnpm check:no-deps
-      - run: pnpm check:knip
-      - run: pnpm lint
-      - run: pnpm build
-      - run: pnpm test:package
-      - if: matrix.node == 22
-        run: pnpm exec size-limit
-      - run: pnpm vitest run --typecheck
+          cache: true
+          sfw: true
+
+      - uses: actions/cache@v4
+        with:
+          path: node_modules/.vite
+          key: ${{ runner.os }}-node${{ matrix.node }}-vite-${{ hashFiles('pnpm-lock.yaml', 'vite.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-node${{ matrix.node }}-vite-
+
+      - run: vp run test
+      - run: vp run build

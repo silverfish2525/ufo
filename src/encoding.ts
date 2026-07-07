@@ -18,7 +18,7 @@ const RAW_QUERY_ENCODE_RE = /[!#$&'(),/:;=?@|~]/g;
 const RAW_QUERY_ENCODE_MAP: Readonly<Record<string, string>> = Object.freeze({
   "!": "%21",
   "#": "%23",
-  "$": "%24",
+  $: "%24",
   "&": "%26",
   "'": "%27",
   "(": "%28",
@@ -40,10 +40,7 @@ const RAW_PATH_ENCODE_MAP: Readonly<Record<string, string>> = Object.freeze({
   "+": "%2B",
   "?": "%3F",
 });
-function lookupCaseInsensitive(
-  table: Readonly<Record<string, string>>,
-  match: string,
-): string {
+function lookupCaseInsensitive(table: Readonly<Record<string, string>>, match: string): string {
   return table[match.toLowerCase()] ?? match;
 }
 
@@ -69,8 +66,9 @@ export function encode(text: string | number): string {
  * @returns encoded string
  */
 export function encodeHash(text: string): string {
-  return encode(text).replace(ENC_HASH_RESTORE_RE, m =>
-    lookupCaseInsensitive(ENC_HASH_RESTORE_MAP, m));
+  return encode(text).replace(ENC_HASH_RESTORE_RE, (m) =>
+    lookupCaseInsensitive(ENC_HASH_RESTORE_MAP, m),
+  );
 }
 
 /**
@@ -88,7 +86,7 @@ export function encodeQueryValue(input: QueryValue): string {
       .replace(PLUS_RE, "%2B")
       .replace(ENC_SPACE_RE, "+")
       // after encodeURI. `*` is in the map for parity but maps to itself (spec-exempt).
-      .replace(RAW_QUERY_ENCODE_RE, c => RAW_QUERY_ENCODE_MAP[c] ?? c)
+      .replace(RAW_QUERY_ENCODE_RE, (c) => RAW_QUERY_ENCODE_MAP[c] ?? c)
   );
 }
 
@@ -115,7 +113,7 @@ export function encodeQueryKey(text: string | number): string {
 export function encodePath(text: string | number): string {
   return encode(text)
     .replace(ENC_ENC_SLASH_RE, "%2F")
-    .replace(RAW_PATH_ENCODE_RE, c => RAW_PATH_ENCODE_MAP[c] ?? c);
+    .replace(RAW_PATH_ENCODE_RE, (c) => RAW_PATH_ENCODE_MAP[c] ?? c);
 }
 
 /**
@@ -144,8 +142,7 @@ export function encodeParam(text: string | number): string {
 export function decode(text: string | number = ""): string {
   try {
     return decodeURIComponent(`${text}`);
-  }
-  catch {
+  } catch {
     return `${text}`;
   }
 }

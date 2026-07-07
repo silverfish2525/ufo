@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { withoutTrailingSlash, withTrailingSlash } from "../src";
 
 describe("withTrailingSlash, queryParams: false", () => {
   const tests: Record<string, string> = {
     "": "/",
-    "bar": "bar/",
+    bar: "bar/",
     "bar#abc": "bar#abc/",
     "bar/": "bar/",
     "foo?123": "foo?123/",
@@ -12,11 +12,9 @@ describe("withTrailingSlash, queryParams: false", () => {
     "foo/?123#abc": "foo/?123#abc/",
   };
 
-  for (const input in tests) {
-    it(input, () => {
-      expect(withTrailingSlash(input)).toBe(tests[input]);
-    });
-  }
+  it.each(Object.entries(tests))("%s", (input, expected) => {
+    expect(withTrailingSlash(input)).toBe(expected);
+  });
 
   it("falsy value", () => {
     expect(withTrailingSlash()).toBe("/");
@@ -26,7 +24,7 @@ describe("withTrailingSlash, queryParams: false", () => {
 describe("withTrailingSlash, queryParams: true", () => {
   const tests: Record<string, string> = {
     "": "/",
-    "bar": "bar/",
+    bar: "bar/",
     "bar/": "bar/",
     "foo?123": "foo/?123",
     "foo/?123": "foo/?123",
@@ -36,11 +34,9 @@ describe("withTrailingSlash, queryParams: true", () => {
     "#": "#",
   };
 
-  for (const input in tests) {
-    it(input, () => {
-      expect(withTrailingSlash(input, true)).toBe(tests[input]);
-    });
-  }
+  it.each(Object.entries(tests))("%s", (input, expected) => {
+    expect(withTrailingSlash(input, true)).toBe(expected);
+  });
 
   it("falsy value", () => {
     expect(withTrailingSlash()).toBe("/");
@@ -51,7 +47,7 @@ describe("withoutTrailingSlash, queryParams: false", () => {
   const tests: Record<string, string> = {
     "": "/",
     "/": "/",
-    "bar": "bar",
+    bar: "bar",
     "bar#abc": "bar#abc",
     "bar/#abc": "bar/#abc",
     "foo?123": "foo?123",
@@ -61,11 +57,9 @@ describe("withoutTrailingSlash, queryParams: false", () => {
     "foo/?k=/": "foo/?k=",
   };
 
-  for (const input in tests) {
-    it(input, () => {
-      expect(withoutTrailingSlash(input)).toBe(tests[input]);
-    });
-  }
+  it.each(Object.entries(tests))("%s", (input, expected) => {
+    expect(withoutTrailingSlash(input)).toBe(expected);
+  });
 
   it("falsy value", () => {
     expect(withoutTrailingSlash()).toBe("/");
@@ -76,7 +70,7 @@ describe("withoutTrailingSlash, queryParams: true", () => {
   const tests: Record<string, string> = {
     "": "/",
     "/": "/",
-    "bar": "bar",
+    bar: "bar",
     "bar/": "bar",
     "bar#abc": "bar#abc",
     "bar/#abc": "bar#abc",
@@ -91,11 +85,9 @@ describe("withoutTrailingSlash, queryParams: true", () => {
     "/#abc": "/#abc",
   };
 
-  for (const input in tests) {
-    it(input, () => {
-      expect(withoutTrailingSlash(input, true)).toBe(tests[input]);
-    });
-  }
+  it.each(Object.entries(tests))("%s", (input, expected) => {
+    expect(withoutTrailingSlash(input, true)).toBe(expected);
+  });
 
   it("falsy value", () => {
     expect(withoutTrailingSlash()).toBe("/");

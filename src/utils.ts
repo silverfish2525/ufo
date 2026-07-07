@@ -11,4 +11,3 @@ export * from "./utils/predicates";
 export * from "./utils/protocol";
 export * from "./utils/query-ops";
 export * from "./utils/slash";
-// _modify.ts intentionally NOT re-exported — it is an internal helper.

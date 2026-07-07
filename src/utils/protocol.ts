@@ -1,15 +1,10 @@
-import type {
-  IsScriptProtocol,
-  IsSpecialScheme,
-  Refine,
-  WithProtocol,
-} from "../_types";
+import type { IsScriptProtocol, IsSpecialScheme, Refine, WithProtocol } from "../_types";
 
 const PROTOCOL_STRICT_REGEX = /^[\s\0]*[A-Z][A-Z0-9+.-]+:[/\\]{1,2}/i;
 const PROTOCOL_REGEX = /^[\s\0]*[A-Z][\s\w\0+.-]+:(?:[/\\]{2})?/i;
 // Issue unjs/ufo#237: distinguishes bare `hostname:port` from opaque URI schemes.
-const HOST_PORT_RE
-  = /^(?:localhost|[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+):\d+(?:[/?#]|$)/i;
+const HOST_PORT_RE =
+  /^(?:localhost|[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+):\d+(?:[/?#]|$)/i;
 const PROTOCOL_RELATIVE_REGEX = /^(?:[/\\]\s*){2,}[^/\\]/;
 
 const SCHEME_STRIP_RE = /[\t\n\r]/g;
@@ -18,12 +13,7 @@ function normalizeSchemeForProtocolChecks(input: string): string {
   return input.replace(SCHEME_STRIP_RE, "");
 }
 
-const SCRIPT_SCHEMES: ReadonlySet<string> = new Set([
-  "blob",
-  "data",
-  "javascript",
-  "vbscript",
-]);
+const SCRIPT_SCHEMES: ReadonlySet<string> = new Set(["blob", "data", "javascript", "vbscript"]);
 
 export interface HasProtocolOptions {
   acceptRelative?: boolean;
@@ -48,16 +38,10 @@ export interface JoinURLOptions {
   allowProtocolRelative?: boolean;
 }
 
-export function hasProtocol(
-  inputString: string,
-  opts?: HasProtocolOptions,
-): boolean;
+export function hasProtocol(inputString: string, opts?: HasProtocolOptions): boolean;
 
 /** @deprecated Same as { hasProtocol(inputString, { acceptRelative: true }) */
-export function hasProtocol(
-  inputString: string,
-  acceptRelative: boolean,
-): boolean;
+export function hasProtocol(inputString: string, acceptRelative: boolean): boolean;
 
 /**
  * Checks if the input has a protocol.
@@ -82,10 +66,7 @@ export function hasProtocol(
  *
  * @group utils
  */
-export function hasProtocol(
-  inputString: string,
-  opts: boolean | HasProtocolOptions = {},
-): boolean {
+export function hasProtocol(inputString: string, opts: boolean | HasProtocolOptions = {}): boolean {
   if (typeof opts === "boolean") {
     opts = { acceptRelative: opts };
   }
@@ -94,8 +75,8 @@ export function hasProtocol(
     return PROTOCOL_STRICT_REGEX.test(normalized);
   }
   return (
-    PROTOCOL_REGEX.test(normalized)
-    || (opts.acceptRelative ? PROTOCOL_RELATIVE_REGEX.test(normalized) : false)
+    PROTOCOL_REGEX.test(normalized) ||
+    (opts.acceptRelative ? PROTOCOL_RELATIVE_REGEX.test(normalized) : false)
   );
 }
 
@@ -118,9 +99,7 @@ export function hasProtocol(
  *
  * @group utils
  */
-export function isScriptProtocol<const S extends string>(
-  protocol: S,
-): IsScriptProtocol<S>;
+export function isScriptProtocol<const S extends string>(protocol: S): IsScriptProtocol<S>;
 export function isScriptProtocol(protocol?: string): boolean;
 export function isScriptProtocol(protocol?: string): boolean {
   if (protocol === undefined || protocol === "") {
@@ -174,9 +153,7 @@ export function withProtocol(input: string, protocol: string): string {
  *
  * @group utils
  */
-export function withHttp<const S extends string>(
-  input: S,
-): Refine<S, WithProtocol<S, "http://">>;
+export function withHttp<const S extends string>(input: S): Refine<S, WithProtocol<S, "http://">>;
 export function withHttp(input: string): string;
 export function withHttp(input: string): string {
   return withProtocol(input, "http://");
@@ -193,9 +170,7 @@ export function withHttp(input: string): string {
  *
  * @group utils
  */
-export function withHttps<const S extends string>(
-  input: S,
-): Refine<S, WithProtocol<S, "https://">>;
+export function withHttps<const S extends string>(input: S): Refine<S, WithProtocol<S, "https://">>;
 export function withHttps(input: string): string;
 export function withHttps(input: string): string {
   return withProtocol(input, "https://");
@@ -209,9 +184,7 @@ export function withHttps(input: string): string {
  * withoutProtocol("http://example.com"); // "example.com"
  * ```
  */
-export function withoutProtocol<const S extends string>(
-  input: S,
-): Refine<S, WithProtocol<S, "">>;
+export function withoutProtocol<const S extends string>(input: S): Refine<S, WithProtocol<S, "">>;
 export function withoutProtocol(input: string): string;
 export function withoutProtocol(input: string): string {
   return withProtocol(input, "");
@@ -237,9 +210,7 @@ export const SPECIAL_SCHEMES: ReadonlySet<string> = new Set([
  *
  * @group utils
  */
-export function isSpecialScheme<const S extends string>(
-  scheme: S,
-): IsSpecialScheme<S>;
+export function isSpecialScheme<const S extends string>(scheme: S): IsSpecialScheme<S>;
 export function isSpecialScheme(scheme?: string): boolean;
 export function isSpecialScheme(scheme?: string): boolean {
   if (scheme === undefined || scheme === "") {

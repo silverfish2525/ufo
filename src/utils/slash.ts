@@ -15,17 +15,9 @@ const TRAILING_SLASH_RE = /\/$|\/\?|\/#/;
  *
  * @group utils
  */
-export function hasTrailingSlash<const S extends string>(
-  input: S,
-): HasTrailingSlash<S>;
-export function hasTrailingSlash(
-  input?: string,
-  respectQueryAndFragment?: boolean,
-): boolean;
-export function hasTrailingSlash(
-  input = "",
-  respectQueryAndFragment?: boolean,
-): boolean {
+export function hasTrailingSlash<const S extends string>(input: S): HasTrailingSlash<S>;
+export function hasTrailingSlash(input?: string, respectQueryAndFragment?: boolean): boolean;
+export function hasTrailingSlash(input = "", respectQueryAndFragment?: boolean): boolean {
   if (!respectQueryAndFragment) {
     return input.endsWith("/");
   }
@@ -50,14 +42,8 @@ export function hasTrailingSlash(
 export function withoutTrailingSlash<const S extends string>(
   input: S,
 ): Refine<S, WithoutTrailingSlash<S>>;
-export function withoutTrailingSlash(
-  input?: string,
-  respectQueryAndFragment?: boolean,
-): string;
-export function withoutTrailingSlash(
-  input = "",
-  respectQueryAndFragment?: boolean,
-): string {
+export function withoutTrailingSlash(input?: string, respectQueryAndFragment?: boolean): string;
+export function withoutTrailingSlash(input = "", respectQueryAndFragment?: boolean): string {
   if (!respectQueryAndFragment) {
     return (hasTrailingSlash(input) ? input.slice(0, -1) : input) || "/";
   }
@@ -73,9 +59,7 @@ export function withoutTrailingSlash(
   }
   const [s0 = "", ...s] = path.split("?");
   const cleanPath = s0.endsWith("/") ? s0.slice(0, -1) : s0;
-  return (
-    (cleanPath || "/") + (s.length > 0 ? `?${s.join("?")}` : "") + fragment
-  );
+  return (cleanPath || "/") + (s.length > 0 ? `?${s.join("?")}` : "") + fragment;
 }
 
 /**
@@ -96,14 +80,8 @@ export function withoutTrailingSlash(
 export function withTrailingSlash<const S extends string>(
   input: S,
 ): Refine<S, WithTrailingSlash<S>>;
-export function withTrailingSlash(
-  input?: string,
-  respectQueryAndFragment?: boolean,
-): string;
-export function withTrailingSlash(
-  input = "",
-  respectQueryAndFragment?: boolean,
-): string {
+export function withTrailingSlash(input?: string, respectQueryAndFragment?: boolean): string;
+export function withTrailingSlash(input = "", respectQueryAndFragment?: boolean): string {
   if (!respectQueryAndFragment) {
     return input.endsWith("/") ? input : `${input}/`;
   }
@@ -129,9 +107,7 @@ export function withTrailingSlash(
  *
  * @group utils
  */
-export function hasLeadingSlash<const S extends string>(
-  input: S,
-): HasLeadingSlash<S>;
+export function hasLeadingSlash<const S extends string>(input: S): HasLeadingSlash<S>;
 export function hasLeadingSlash(input?: string): boolean;
 export function hasLeadingSlash(input = ""): boolean {
   return input.startsWith("/");
@@ -167,9 +143,7 @@ export function withoutLeadingSlash(input = ""): string {
  *
  * @group utils
  */
-export function withLeadingSlash<const S extends string>(
-  input: S,
-): Refine<S, WithLeadingSlash<S>>;
+export function withLeadingSlash<const S extends string>(input: S): Refine<S, WithLeadingSlash<S>>;
 export function withLeadingSlash(input?: string): string;
 export function withLeadingSlash(input = ""): string {
   return hasLeadingSlash(input) ? input : `/${input}`;

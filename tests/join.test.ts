@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { joinRelativeURL, joinURL } from "../src";
 
 const joinURLTests = [
@@ -28,8 +28,12 @@ const joinURLTests = [
 
 describe("joinURL", () => {
   for (const t of joinURLTests) {
-    it(`joinURL(${t.input.map(i => JSON.stringify(i)).join(", ")}) === ${JSON.stringify(t.out)}`, () => {
-      expect(joinURL(...([...t.input] as [string, ...string[]]))).toBe(t.out);
+    it(`joinURL(${t.input.map((i) => JSON.stringify(i)).join(", ")}) === ${JSON.stringify(t.out)}`, () => {
+      // @ts-expect-error - joinURLTests intentionally mixes signature-invalid
+      // fixtures (empty tuple, undefined base) with valid ones to verify
+      // runtime tolerance. The tuple union widens `t.input` beyond joinURL's
+      // declared `(base: string, ...rest: string[])` signature.
+      expect(joinURL(...t.input)).toBe(t.out);
     });
   }
 });
@@ -57,8 +61,12 @@ describe("joinRelativeURL", () => {
   ];
 
   for (const t of relativeTests) {
-    it(`joinRelativeURL(${t.input.map(i => JSON.stringify(i)).join(", ")}) === ${JSON.stringify(t.out)}`, () => {
-      expect(joinRelativeURL(...(t.input as string[]))).toBe(t.out);
+    it(`joinRelativeURL(${t.input.map((i) => JSON.stringify(i)).join(", ")}) === ${JSON.stringify(t.out)}`, () => {
+      // @ts-expect-error - relativeTests inherits joinURLTests' heterogeneous
+      // fixture shape (empty tuple, undefined-base cases) plus additional
+      // relative-path cases; TS can't narrow the union to joinRelativeURL's
+      // `string[]` rest-parameter across all iterations.
+      expect(joinRelativeURL(...t.input)).toBe(t.out);
     });
   }
 });
@@ -77,13 +85,11 @@ describe("joinURL — SEC-02 leading '//' normalization", () => {
   });
   it("protocol-relative base is preserved (caller's explicit intent)", () => {
     // Already asserted above in the data-driven suite; re-pinned here for SEC-02 clarity.
-    expect(joinURL("//google.com/", "./foo", "/bar")).toBe(
-      "//google.com/foo/bar",
-    );
+    expect(joinURL("//google.com/", "./foo", "/bar")).toBe("//google.com/foo/bar");
   });
   it("escape hatch: { allowProtocolRelative: true } preserves '//'", () => {
-    expect(
-      joinURL("", "//attacker.com/x", { allowProtocolRelative: true }),
-    ).toBe("//attacker.com/x");
+    expect(joinURL("", "//attacker.com/x", { allowProtocolRelative: true })).toBe(
+      "//attacker.com/x",
+    );
   });
 });

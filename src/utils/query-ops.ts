@@ -15,10 +15,10 @@ import { modifyParsedURL } from "./_modify";
  *
  * @group utils
  */
-export function withQuery<
-  const Input extends string,
-  const Q extends QueryObject,
->(input: Input, query: Q): WithQueryResult<Input, Q>;
+export function withQuery<const Input extends string, const Q extends QueryObject>(
+  input: Input,
+  query: Q,
+): WithQueryResult<Input, Q>;
 export function withQuery(input: string, query: QueryObject): string;
 export function withQuery(input: string, query: QueryObject): string {
   return modifyParsedURL(input, (parsed) => {
@@ -49,7 +49,9 @@ export function filterQuery(
   }
   return modifyParsedURL(input, (parsed) => {
     const query = parseQuery(parsed.search);
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.create returns any
     const filteredQuery: ParsedQuery = Object.create(
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- getPrototypeOf return is any
       Object.getPrototypeOf(query) as object | null,
     ) as ParsedQuery;
     for (const key of Object.keys(query)) {
@@ -73,15 +75,12 @@ export function filterQuery(
  * ```
  * @group utils
  */
-export function getQuery<T extends ParsedQuery = ParsedQuery>(
-  input: string,
-): T {
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
+export function getQuery<T extends ParsedQuery = ParsedQuery>(input: string): T {
   return parseQuery<T>(parseURL(input).search);
 }
 
-export function withoutQuery<const S extends string>(
-  input: S,
-): Refine<S, WithoutQuery<S>>;
+export function withoutQuery<const S extends string>(input: S): Refine<S, WithoutQuery<S>>;
 export function withoutQuery(input: string): string;
 /**
  * Removes the query string from a URL, preserving path and fragment.
@@ -97,10 +96,8 @@ export function withoutQuery(input: string): string;
  */
 export function withoutQuery(input: string): string {
   const qIdx = input.indexOf("?");
-  if (qIdx === -1)
-    return input;
+  if (qIdx === -1) return input;
   const hIdx = input.indexOf("#", qIdx);
-  if (hIdx === -1)
-    return input.slice(0, qIdx);
+  if (hIdx === -1) return input.slice(0, qIdx);
   return input.slice(0, qIdx) + input.slice(hIdx);
 }

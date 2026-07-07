@@ -5,7 +5,7 @@
 const n = /[^\0-\x7E]/;
 const t = /[\x2E\u3002\uFF0E\uFF61]/g;
 const o = {
-  "overflow": "Overflow Error",
+  overflow: "Overflow Error",
   "not-basic": "Illegal Input",
   "invalid-input": "Invalid Input",
 };
@@ -32,7 +32,7 @@ export function toASCII(o) {
     const s = (function (n, t) {
       const o = [];
       let e = n.length;
-      for (; e--;) {
+      for (; e--; ) {
         o[e] = t(n[e]);
       }
       return o;
@@ -40,22 +40,20 @@ export function toASCII(o) {
     return r + s;
   })(o, (t) => {
     return n.test(t)
-      ? `xn--${
-        (function (n) {
+      ? `xn--${(function (n) {
           const t = [];
           const o = (n = (function (n) {
             const t = [];
             let o = 0;
             const e = n.length;
-            for (; o < e;) {
+            for (; o < e; ) {
               const r = n.charCodeAt(o++);
               if (r >= 55296 && r <= 56319 && o < e) {
                 const e = n.charCodeAt(o++);
                 (64512 & e) == 56320
                   ? t.push(((1023 & r) << 10) + (1023 & e) + 65536)
                   : (t.push(r), o--);
-              }
-              else {
+              } else {
                 t.push(r);
               }
             }
@@ -69,15 +67,13 @@ export function toASCII(o) {
           }
           const h = t.length;
           let p = h;
-          for (h && t.push("-"); p < o;) {
+          for (h && t.push("-"); p < o; ) {
             let o = 2147483647;
             for (const t of n) {
               t >= f && t < o && (o = t);
             }
             const a = p + 1;
-            (o - f > e((2147483647 - i) / a) && s("overflow"),
-            (i += (o - f) * a),
-            (f = o));
+            (o - f > e((2147483647 - i) / a) && s("overflow"), (i += (o - f) * a), (f = o));
             for (const o of n) {
               if ((o < f && ++i > 2147483647 && s("overflow"), o == f)) {
                 let n = i;

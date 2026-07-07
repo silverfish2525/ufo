@@ -11,4 +11,7 @@ types
 .eslintcache
 .agents/
 .pi/
-advisor-plans/
+
+.vite-inspect
+.vite-cache
+.vp/

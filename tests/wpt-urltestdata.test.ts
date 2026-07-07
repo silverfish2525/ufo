@@ -2,7 +2,7 @@
 // NOTE: parseURL(input, defaultProto) does not accept a full base URL; base-relative
 // cases are filtered out (require resolveURL which is plan 006's territory).
 // Divergent cases listed in EXPECTED_FAILURES run via it.fails —
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { parseURL } from "../src";
 import rawCases from "./fixture/urltestdata.json";
 
@@ -20,17 +20,17 @@ interface WptCase {
   hash?: string;
 }
 
-const allCases: WptCase[] = (rawCases as unknown[]).filter(
+const allCases: WptCase[] = (rawCases as readonly unknown[]).filter(
   (c): c is WptCase => typeof c === "object" && c !== null && "input" in c,
 );
 
 const SPECIAL_PREFIXES = ["http:", "https:", "ws:", "wss:", "ftp:", "file:"];
 
 const specialCases = allCases.filter(
-  c =>
-    !c.failure
-    && typeof c.input === "string"
-    && SPECIAL_PREFIXES.some(p => c.input.toLowerCase().startsWith(p)),
+  (c) =>
+    !c.failure &&
+    typeof c.input === "string" &&
+    SPECIAL_PREFIXES.some((p) => c.input.toLowerCase().startsWith(p)),
 );
 
 const INITIAL_LIMIT = 100;
@@ -131,7 +131,7 @@ const EXPECTED_FAILURES: ReadonlySet<string> = new Set<string>([
 
 describe("wPT urltestdata.json (special-scheme subset)", () => {
   for (const c of subset) {
-    const label = `${c.input}${(c.base !== undefined && c.base !== "") ? ` (base: ${String(c.base)})` : ""}`;
+    const label = `${c.input}${c.base !== undefined && c.base !== "" ? ` (base: ${String(c.base)})` : ""}`;
 
     if (SKIP_LIST.has(c.input)) {
       it.skip(`${label} [known divergence — skipped]`, () => {});
@@ -144,16 +144,11 @@ describe("wPT urltestdata.json (special-scheme subset)", () => {
 
     runner(label, () => {
       const parsed = parseURL(c.input);
-      if (c.protocol !== undefined)
-        expect(parsed.protocol).toBe(c.protocol);
-      if (c.host !== undefined)
-        expect(parsed.host).toBe(c.host);
-      if (c.pathname !== undefined)
-        expect(parsed.pathname).toBe(c.pathname);
-      if (c.search !== undefined)
-        expect(parsed.search).toBe(c.search);
-      if (c.hash !== undefined)
-        expect(parsed.hash).toBe(c.hash);
+      if (c.protocol !== undefined) expect(parsed.protocol).toBe(c.protocol);
+      if (c.host !== undefined) expect(parsed.host).toBe(c.host);
+      if (c.pathname !== undefined) expect(parsed.pathname).toBe(c.pathname);
+      if (c.search !== undefined) expect(parsed.search).toBe(c.search);
+      if (c.hash !== undefined) expect(parsed.hash).toBe(c.hash);
     });
   }
 });
