@@ -10,7 +10,6 @@ describe("punycode (toASCII)", () => {
     .filter(
       (t): t is Extract<typeof t, { input: string; output: string }> =>
         typeof t === "object" &&
-        t !== null &&
         typeof t.output === "string" &&
         typeof t.input === "string" &&
         !ignoredTests.has(t.input),

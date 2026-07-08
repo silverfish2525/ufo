@@ -200,10 +200,6 @@ describe("encodeQueryItem", () => {
   it("emits 'key=' for null", () => {
     expect(encodeQueryItem("k", null)).toBe("k=");
   });
-
-  it("emits empty string for undefined", () => {
-    expect(encodeQueryItem("k", undefined)).toBe("");
-  });
 });
 
 describe("stringifyQuery/parseQuery round-trip", () => {

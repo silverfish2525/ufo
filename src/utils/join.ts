@@ -19,6 +19,7 @@ export function joinURL(base: string, ...input: [...string[], JoinURLOptions]): 
 export function joinURL(base: string, ...input: (string | JoinURLOptions)[]): string {
   let opts: JoinURLOptions | undefined = undefined;
   const last = input.at(-1);
+  // oxlint-disable-next-line typescript/no-unnecessary-condition -- defensive null check, matches upstream unjs/ufo
   if (last !== null && typeof last === "object" && !Array.isArray(last)) {
     opts = last;
     input = input.slice(0, -1);

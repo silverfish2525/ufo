@@ -419,7 +419,6 @@ describe("withoutFragment", () => {
   it("fast-path: no '#' returns input identity", () => {
     const input = "https://a.com/b";
     expect(withoutFragment(input)).toBe(input);
-    expect(withoutFragment(input) === input).toBe(true);
   });
   it("fast-path: strips '#hash' from normalized input", () => {
     expect(withoutFragment("https://a.com/b#h")).toBe("https://a.com/b");

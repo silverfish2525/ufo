@@ -155,6 +155,7 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
   const lastAtInAuthority = authoritySlice.lastIndexOf("@");
 
   let auth = "";
+  // oxlint-disable-next-line eslint/no-useless-assignment -- default preserved for the if-branch, else-branch overwrites; matches upstream unjs/ufo
   let hostAndPath = "";
   if (lastAtInAuthority === -1) {
     hostAndPath = authorityAndPath;

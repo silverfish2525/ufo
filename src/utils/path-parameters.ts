@@ -83,6 +83,8 @@ export function withPathParameters(
         case "empty": {
           return "";
         }
+        // oxlint-disable-next-line unicorn/no-useless-switch-case -- fall-through matches upstream unjs/ufo and satisfies switch-exhaustiveness-check
+        case "leave":
         default: {
           return match;
         }

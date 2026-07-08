@@ -135,7 +135,7 @@ describe("wPT urltestdata.json (special-scheme subset)", () => {
     const label = `${c.input}${c.base !== undefined && c.base !== "" ? ` (base: ${String(c.base)})` : ""}`;
 
     if (SKIP_LIST.has(c.input)) {
-      it.skip(`${label} [known divergence — better-ufo intentionally deviates]`, () => {});
+      it.todo(`${label} [known divergence — better-ufo intentionally deviates]`);
       continue;
     }
 
