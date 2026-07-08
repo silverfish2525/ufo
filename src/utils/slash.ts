@@ -3,12 +3,12 @@ import type {
   HasTrailingSlash,
   Refine,
   WithLeadingSlash,
+  WithTrailingSlash,
   WithoutLeadingSlash,
   WithoutTrailingSlash,
-  WithTrailingSlash,
 } from "../_types";
 
-const TRAILING_SLASH_RE = /\/$|\/\?|\/#/;
+const TRAILING_SLASH_RE = /\/$|\/\?|\/#/u;
 
 /**
  * Checks if the URL or pathname ends with a trailing slash.
@@ -18,7 +18,7 @@ const TRAILING_SLASH_RE = /\/$|\/\?|\/#/;
 export function hasTrailingSlash<const S extends string>(input: S): HasTrailingSlash<S>;
 export function hasTrailingSlash(input?: string, respectQueryAndFragment?: boolean): boolean;
 export function hasTrailingSlash(input = "", respectQueryAndFragment?: boolean): boolean {
-  if (!respectQueryAndFragment) {
+  if (respectQueryAndFragment !== true) {
     return input.endsWith("/");
   }
   return TRAILING_SLASH_RE.test(input);
@@ -44,7 +44,7 @@ export function withoutTrailingSlash<const S extends string>(
 ): Refine<S, WithoutTrailingSlash<S>>;
 export function withoutTrailingSlash(input?: string, respectQueryAndFragment?: boolean): string;
 export function withoutTrailingSlash(input = "", respectQueryAndFragment?: boolean): string {
-  if (!respectQueryAndFragment) {
+  if (respectQueryAndFragment !== true) {
     return (hasTrailingSlash(input) ? input.slice(0, -1) : input) || "/";
   }
   if (!hasTrailingSlash(input, true)) {
@@ -82,7 +82,7 @@ export function withTrailingSlash<const S extends string>(
 ): Refine<S, WithTrailingSlash<S>>;
 export function withTrailingSlash(input?: string, respectQueryAndFragment?: boolean): string;
 export function withTrailingSlash(input = "", respectQueryAndFragment?: boolean): string {
-  if (!respectQueryAndFragment) {
+  if (respectQueryAndFragment !== true) {
     return input.endsWith("/") ? input : `${input}/`;
   }
   if (hasTrailingSlash(input, true)) {

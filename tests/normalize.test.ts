@@ -3,43 +3,43 @@ import { normalizeURL, parseURL, withoutTrailingSlash } from "../src";
 
 describe("normalizeURL", () => {
   const tests: Record<string, string> = {
-    "http://foo.com": "http://foo.com",
-    "http://foo.com/bar": "http://foo.com/bar",
-    "proto://path/to": "proto://path/to",
-    "/bar": "/bar",
-    bar: "bar",
-    "./": "./",
-    ".": ".",
     "": "",
-    "./foo": "./foo",
+    "\0http://google.com": "http://google.com",
+    ".": ".",
     ".#hash": ".#hash",
-    ".?foo=123": ".?foo=123",
+    "./": "./",
     "./?foo=123#hash": "./?foo=123#hash",
-    "/test?query=123#hash": "/test?query=123#hash",
-    "test?query=123#hash": "test?query=123#hash",
-    "/%c": "/%25c",
+    "./foo": "./foo",
+    ".?foo=123": ".?foo=123",
     "/%": "/%25",
-    "/test%2Bfile.txt": "/test%2Bfile.txt",
-    "http://foo.com/test?query=123#hash": "http://foo.com/test?query=123#hash",
-    "http://localhost:3000": "http://localhost:3000",
-    "http://my_email%40gmail.com:password@www.my_site.com":
-      "http://my_email%40gmail.com:password@www.my_site.com",
-    "/test?query=123,123#hash, test": "/test?query=123%2C123#hash,%20test",
-    "http://test.com/%C3%B6?foo=تست": "http://test.com/%C3%B6?foo=%D8%AA%D8%B3%D8%AA",
+    "/%c": "/%25c",
+    "/bar": "/bar",
     "/http:/": "/http:/",
+    "/test%2Bfile.txt": "/test%2Bfile.txt",
+    "/test?query=123#hash": "/test?query=123#hash",
+    "/test?query=123,123#hash, test": "/test?query=123%2C123#hash,%20test",
+    bar: "bar",
     "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]/":
       "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]/",
-    "http://localhost/?redirect=http:%2F%2Fgoogle.com?q=test":
-      "http://localhost/?redirect=http%3A%2F%2Fgoogle.com%3Fq%3Dtest",
-    "http://localhost/?email=some+v1@email.com": "http://localhost/?email=some+v1%40email.com",
+    "http://example.com/foo\\bar": "http://example.com/foo/bar",
+    "http://foo.com": "http://foo.com",
+    "http://foo.com/bar": "http://foo.com/bar",
+    "http://foo.com/test?query=123#hash": "http://foo.com/test?query=123#hash",
     "http://localhost/?email=some%2Bv1%40email.com":
       "http://localhost/?email=some%2Bv1%40email.com",
+    "http://localhost/?email=some+v1@email.com": "http://localhost/?email=some+v1%40email.com",
+    "http://localhost/?redirect=http:%2F%2Fgoogle.com?q=test":
+      "http://localhost/?redirect=http%3A%2F%2Fgoogle.com%3Fq%3Dtest",
     "http://localhost/abc/deg%2F%2Ftest?email=some+v1@email.com":
       "http://localhost/abc/deg%2F%2Ftest?email=some+v1%40email.com",
     "http://localhost/abc/deg%2f%3f%26?email=some+v1@email.com&foo=bar":
       "http://localhost/abc/deg%2F%3F%26?email=some+v1%40email.com&foo=bar",
-    "http://example.com/foo\\bar": "http://example.com/foo/bar",
-    "\0http://google.com": "http://google.com",
+    "http://localhost:3000": "http://localhost:3000",
+    "http://my_email%40gmail.com:password@www.my_site.com":
+      "http://my_email%40gmail.com:password@www.my_site.com",
+    "http://test.com/%C3%B6?foo=تست": "http://test.com/%C3%B6?foo=%D8%AA%D8%B3%D8%AA",
+    "proto://path/to": "proto://path/to",
+    "test?query=123#hash": "test?query=123#hash",
   };
 
   const validURLS = [
@@ -94,8 +94,8 @@ describe("normalizeURL", () => {
 
 describe("sEC-20: normalizeURL host round-trip (no authority leak)", () => {
   // Percent-encoded structural characters in the host slot must not decode into
-  // raw `/?#@` during normalization — otherwise the browser reparses the
-  // authority at those chars and the host allowlist desyncs.
+  // Raw `/?#@` during normalization — otherwise the browser reparses the
+  // Authority at those chars and the host allowlist desyncs.
   const cases = [
     ["http://a%2Fb.com/", "a%2Fb.com"],
     ["http://user@a%2Fb.com/", "a%2Fb.com"],
@@ -103,11 +103,8 @@ describe("sEC-20: normalizeURL host round-trip (no authority leak)", () => {
     ["http://a%23b.com/", "a%23b.com"],
     ["http://a%40b.com/", "a%40b.com"],
   ] as const;
-  for (const [input, expectedHost] of cases) {
-    it(`${input} host round-trips as ${expectedHost}`, () => {
-      const norm = normalizeURL(input);
-      // parseURL(normalizeURL(x)).host === parseURL(x).host
-      expect(parseURL(norm).host).toBe(expectedHost);
-    });
-  }
+  it.each(cases)("%s host round-trips as %s", (input, expectedHost) => {
+    const norm = normalizeURL(input);
+    expect(parseURL(norm).host).toBe(expectedHost);
+  });
 });

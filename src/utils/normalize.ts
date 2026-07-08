@@ -1,10 +1,13 @@
 import type { CleanDoubleSlashes, NormalizeURL, Refine, ResolveURL } from "../_types";
 import { decode, decodePath, encodeHash, encodeHost, encodePath } from "../encoding";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via parse→utils barrel
 import { parseURL, stringifyParsedURL } from "../parse";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via query→utils barrel
 import { parseQuery, stringifyQuery } from "../query";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via _modify→parse→utils barrel
 import { modifyParsedURL } from "./_modify";
 import { isNonEmptyURL } from "./predicates";
-import { withoutLeadingSlash, withTrailingSlash } from "./slash";
+import { withTrailingSlash, withoutLeadingSlash } from "./slash";
 
 /**
  * Removes double slashes from the URL.
@@ -23,12 +26,12 @@ import { withoutLeadingSlash, withTrailingSlash } from "./slash";
 export function cleanDoubleSlashes<const S extends string>(input: S): CleanDoubleSlashes<S>;
 export function cleanDoubleSlashes(input?: string): string;
 export function cleanDoubleSlashes(input = ""): string {
-  const qIdx = input.search(/[?#]/);
+  const qIdx = input.search(/[?#]/u);
   const path = qIdx === -1 ? input : input.slice(0, qIdx);
   const rest = qIdx === -1 ? "" : input.slice(qIdx);
   const cleaned = path
     .split("://")
-    .map((string_) => string_.replace(/\/{2,}/g, "/"))
+    .map((string_) => string_.replaceAll(/\/{2,}/gu, "/"))
     .join("://");
   return cleaned + rest;
 }

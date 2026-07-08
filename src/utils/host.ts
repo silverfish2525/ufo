@@ -1,4 +1,5 @@
 import type { Refine, WithoutHost } from "../_types";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via parse→utils barrel
 import { parseURL, stringifyParsedURL } from "../parse";
 import { hasProtocol } from "./protocol";
 
@@ -19,9 +20,9 @@ export function withoutHost(input: string): string {
   if (
     !hasProtocol(input, { acceptRelative: true }) &&
     input.length > 0 &&
-    (input[0] === "/" || input[0] === "?" || input[0] === "#")
+    (input.startsWith("/") || input.startsWith("?") || input.startsWith("#"))
   ) {
-    return input[0] === "/" ? input : `/${input}`;
+    return input.startsWith("/") ? input : `/${input}`;
   }
   const parsed = parseURL(input);
   return (parsed.pathname || "/") + parsed.search + parsed.hash;
@@ -31,8 +32,19 @@ function hasNoAuthoritySlot(input: string): boolean {
   return (
     !hasProtocol(input, { acceptRelative: true }) &&
     input.length > 0 &&
-    (input[0] === "/" || input[0] === "?" || input[0] === "#")
+    (input.startsWith("/") || input.startsWith("?") || input.startsWith("#"))
   );
+}
+
+function validatePort(port: string | number): string {
+  const n = typeof port === "number" ? port : Number(port);
+  if (!Number.isInteger(n) || n < 1 || n > 65_535) {
+    throw new TypeError(
+      `withPort: expected integer in [1, 65535], got ${JSON.stringify(port)}. ` +
+        `Use withoutPort() to strip the port.`,
+    );
+  }
+  return String(n);
 }
 
 /**
@@ -53,6 +65,9 @@ function hasNoAuthoritySlot(input: string): boolean {
  * // Returns "/only/path"                       (no-op on relative input)
  * ```
  *
+ * @param input - The URL string.
+ * @param host - The new host value to set.
+ * @returns The URL string with the host replaced.
  * @group utils
  */
 export function withHost(input: string, host: string): string {
@@ -76,6 +91,9 @@ export function withHost(input: string, host: string): string {
  * withPort("/only/path", 8080)             // "/only/path"  (no-op)
  * ```
  *
+ * @param input - The URL string.
+ * @param port - The port number or string (1–65535).
+ * @returns The URL string with the port set.
  * @group utils
  */
 export function withPort(input: string, port: string | number): string {
@@ -88,20 +106,9 @@ export function withPort(input: string, port: string | number): string {
   if (host === "") {
     return input;
   }
-  const hostname = host.replace(/:\d+$/, "").replace(/^(\[[^\]]*\]).*$/, "$1");
+  const hostname = host.replace(/:\d+$/u, "").replace(/^(?<bracket>\[[^\]]*\]).*$/u, "$<bracket>");
   parsed.host = `${hostname}:${portString}`;
   return stringifyParsedURL(parsed);
-}
-
-function validatePort(port: string | number): string {
-  const n = typeof port === "number" ? port : Number(port);
-  if (!Number.isInteger(n) || n < 1 || n > 65_535) {
-    throw new TypeError(
-      `withPort: expected integer in [1, 65535], got ${JSON.stringify(port)}. ` +
-        `Use withoutPort() to strip the port.`,
-    );
-  }
-  return String(n);
 }
 
 /**
@@ -115,6 +122,8 @@ function validatePort(port: string | number): string {
  * withoutPort("/relative/path")            // "/relative/path"
  * ```
  *
+ * @param input - The URL string.
+ * @returns The URL string with the port removed.
  * @group utils
  */
 export function withoutPort(input: string): string {
@@ -122,11 +131,11 @@ export function withoutPort(input: string): string {
     return input;
   }
   const parsed = parseURL(input);
-  const host = parsed.host;
+  const { host } = parsed;
   if (host === undefined || host === "") {
     return input;
   }
-  parsed.host = host.replace(/(\]|[^:](?::\d+)?):\d+$/, (_m, p1: string) => p1);
+  parsed.host = host.replace(/(?<keep>\]|[^:](?::\d+)?):\d+$/u, (_m, p1: string) => p1);
   return stringifyParsedURL(parsed);
 }
 
@@ -147,6 +156,8 @@ export function withoutPort(input: string): string {
  * withoutAuth("/relative/path")               // "/relative/path"
  * ```
  *
+ * @param input - The URL string.
+ * @returns The URL string with userinfo stripped.
  * @group utils
  */
 export function withoutAuth(input: string): string {

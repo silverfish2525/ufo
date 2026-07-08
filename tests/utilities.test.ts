@@ -11,16 +11,17 @@ import {
   withHost,
   withHttp,
   withHttps,
+  withPathParameters,
+  withPort,
+  withProtocol,
   withoutAuth,
   withoutFragment,
   withoutHost,
   withoutPort,
   withoutProtocol,
   withoutQuery,
-  withPathParameters,
-  withPort,
-  withProtocol,
 } from "../src";
+import type { ParsedURL } from "../src";
 
 describe("hasProtocol", () => {
   const tests = [
@@ -28,7 +29,8 @@ describe("hasProtocol", () => {
     { input: "//", out: [false, false, false] },
     { input: "///", out: [false, false, false] },
     // C: looks like a 1-char scheme per RFC 3986 after {1,} fix (Windows path false-positive is now accepted)
-    { input: "C:/test", out: [false, false, false] }, // RFC 3986: single-char schemes invalid (plan 004)
+    // RFC 3986: single-char schemes invalid (plan 004)
+    { input: "C:/test", out: [false, false, false] },
     { input: "/test", out: [false, false, false] },
 
     // Has protocol (strict)
@@ -65,7 +67,7 @@ describe("hasProtocol", () => {
     { input: "bl\tob:x", out: [true, false, true] },
     { input: "ht\ttp://example.com", out: [true, true, true] },
     // Whitespace that browsers do NOT strip stays permissive under default (matches prior behavior,
-    // documents the boundary):
+    // Documents the boundary):
     { input: "java\vscript:alert(1)", out: [true, false, true] },
     { input: "java\fscript:alert(1)", out: [true, false, true] },
     { input: "java\u00A0script:alert(1)", out: [true, false, true] },
@@ -86,10 +88,9 @@ describe("hasProtocol", () => {
   });
 
   it("accepts multi-character schemes (non-strict)", () => {
-    // RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) — min 2 chars total
-    expect(hasProtocol("s3://bucket")).toBe(true); // 2-char scheme valid
-    expect(hasProtocol("ws://host")).toBe(true); // 2-char scheme valid
-    expect(hasProtocol("a://foo")).toBe(false); // single-char scheme invalid per RFC
+    expect(hasProtocol("s3://bucket")).toBe(true);
+    expect(hasProtocol("ws://host")).toBe(true);
+    expect(hasProtocol("a://foo")).toBe(false);
   });
 
   it("accepts multi-character schemes (strict)", () => {
@@ -111,9 +112,6 @@ describe("isScriptProtocol", () => {
     { input: "javaScript:", out: true },
     { input: "vbscript:", out: true },
     { input: "\0vbscript:", out: true },
-
-    // Test strings are inert — they exercise the parser, not any renderer.
-    // SEC-01: tampering inside the scheme must not defeat detection
     { input: "java\tscript:", out: true },
     { input: "java\nscript:", out: true },
     { input: "java\rscript:", out: true },
@@ -121,8 +119,7 @@ describe("isScriptProtocol", () => {
     { input: "vb\tscript:", out: true },
     { input: "da\tta:", out: true },
     { input: "bl\tob:", out: true },
-    { input: " \tjavascript:", out: true }, // leading whitespace + tab inside
-    // Negative controls: benign schemes with same tampering must NOT flag as script
+    { input: " \tjavascript:", out: true },
     { input: "ht\ttp:", out: false },
     { input: "htt\nps:", out: false },
     { input: "ma\tilto:", out: false },
@@ -146,7 +143,7 @@ describe("isRelative", () => {
 });
 
 describe("stringifyParsedURL", () => {
-  const tests = [
+  const stringTests: { input: string; out: string }[] = [
     { input: ".#hash", out: ".#hash" },
     { input: ".?foo=123", out: ".?foo=123" },
     { input: "./?foo=123#hash", out: "./?foo=123#hash" },
@@ -168,20 +165,26 @@ describe("stringifyParsedURL", () => {
       input: "/test?query=123,123#hash, test",
       out: "/test?query=123,123#hash, test",
     },
-    {
-      input: { host: "google.com" },
-      out: "google.com",
-    },
-    {
-      input: { protocol: "https:", host: "google.com" },
-      out: "https://google.com",
-    },
+  ];
+  const objectTests: { input: Partial<ParsedURL>; out: string }[] = [
+    { input: { host: "google.com" }, out: "google.com" },
+    { input: { host: "google.com", protocol: "https:" }, out: "https://google.com" },
   ];
 
-  it.each(tests)("$input", (t) => {
-    expect(stringifyParsedURL(typeof t.input === "string" ? parsePath(t.input) : t.input)).toBe(
-      t.out,
-    );
+  it.each(stringTests)("$input", (t) => {
+    expect(stringifyParsedURL(parsePath(t.input))).toBe(t.out);
+  });
+
+  it.each(objectTests)("$input", (t) => {
+    expect(stringifyParsedURL(t.input)).toBe(t.out);
+  });
+
+  it.each(stringTests)("$input", (t) => {
+    expect(stringifyParsedURL(parsePath(t.input))).toBe(t.out);
+  });
+
+  it.each(objectTests)("$input", (t) => {
+    expect(stringifyParsedURL(t.input)).toBe(t.out);
   });
 });
 
@@ -226,49 +229,49 @@ describe("withProtocol", () => {
   const tests = [
     {
       input: "example.com",
-      protocol: "https://",
       out: "https://example.com",
+      protocol: "https://",
     },
     {
       input: "//example.com",
-      protocol: "https://",
       out: "https://example.com",
+      protocol: "https://",
     },
     {
-      input: "://example.com", // Malformed URL is considered without protocol
-      protocol: "https://",
+      input: "://example.com",
       out: "https://://example.com",
+      protocol: "https://",
     },
     {
       input: "http://example.com",
-      protocol: "https://",
       out: "https://example.com",
+      protocol: "https://",
     },
     {
       input: "https://example.com",
-      protocol: "http://",
       out: "http://example.com",
+      protocol: "http://",
     },
     {
       input: "ftp://example.com/test?foo",
-      protocol: "http://",
       out: "http://example.com/test?foo",
+      protocol: "http://",
     },
     {
       input: "http://foo.com/test?query=123#hash",
-      protocol: "ftp://",
       out: "ftp://foo.com/test?query=123#hash",
+      protocol: "ftp://",
     },
     {
       input: "file:///home/user",
-      protocol: "https://",
       out: "https:///home/user",
+      protocol: "https://",
     },
-    { input: "tel:1234567890", protocol: "skype:", out: "skype:1234567890" },
+    { input: "tel:1234567890", out: "skype:1234567890", protocol: "skype:" },
     {
       input: "tel://+1234567890",
-      protocol: "callto://",
       out: "callto://+1234567890",
+      protocol: "callto://",
     },
   ];
 
@@ -277,14 +280,14 @@ describe("withProtocol", () => {
   });
 
   // Issue unjs/ufo#237: `withProtocol('localhost:9000', ...)` used to strip
-  // the host and produce `http://9000`. HOST_PORT_RE now disambiguates
-  // hostname:port from opaque URI schemes.
+  // The host and produce `http://9000`. HOST_PORT_RE now disambiguates
+  // Hostname:port from opaque URI schemes.
   it("issue #237: preserves host when input is `hostname:port`", () => {
     expect(withProtocol("localhost:9000", "http://")).toBe("http://localhost:9000");
     expect(withProtocol("foo.com:8080/path", "https://")).toBe("https://foo.com:8080/path");
     expect(withProtocol("dev-host.local:3000/x", "http://")).toBe("http://dev-host.local:3000/x");
     // Opaque schemes still get their scheme replaced — the guard only fires
-    // for real hostname-shaped inputs (containing `.` or exactly `localhost`).
+    // For real hostname-shaped inputs (containing `.` or exactly `localhost`).
     expect(withProtocol("tel:1234567890", "skype:")).toBe("skype:1234567890");
     expect(withProtocol("mailto:foo@bar", "skype:")).toBe("skype:foo@bar");
   });
@@ -323,55 +326,49 @@ describe("isEqual", () => {
     { input: ["/foo%20bar/", "/foo bar", { encoding: true }], out: false },
   ];
 
-  for (const t of tests) {
-    it(`${t.input[0]} == ${t.input[1]} ${
-      t.input[2] !== undefined ? JSON.stringify(t.input[2]) : ""
-    }`, () => {
-      expect(isEqual(t.input[0], t.input[1], t.input[2])).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input[0] == $input[1] $input[2]", (t) => {
+    expect(isEqual(t.input[0], t.input[1], t.input[2])).toBe(t.out);
+  });
 });
 
 describe("withFragment", () => {
   const tests = [
     {
+      fragment: "foo",
       input: "https://example.com",
-      fragment: "foo",
       out: "https://example.com#foo",
     },
     {
-      input: "https://example.com#bar",
       fragment: "foo",
+      input: "https://example.com#bar",
       out: "https://example.com#foo",
     },
-    { input: "https://example.com", fragment: "", out: "https://example.com" },
+    { fragment: "", input: "https://example.com", out: "https://example.com" },
     {
-      input: "https://example.com#bar",
       fragment: "0",
+      input: "https://example.com#bar",
       out: "https://example.com#0",
     },
     {
-      input: "https://example.com#bar",
       fragment: "foo bar",
+      input: "https://example.com#bar",
       out: "https://example.com#foo%20bar",
     },
     {
-      input: "https://example.com#bar",
       fragment: "foo/bar",
+      input: "https://example.com#bar",
       out: "https://example.com#foo/bar",
     },
     {
-      input: "https://example.com?foo=bar",
       fragment: "baz",
+      input: "https://example.com?foo=bar",
       out: "https://example.com?foo=bar#baz",
     },
   ];
 
-  for (const t of tests) {
-    it(`${JSON.stringify(t.input)} + ${JSON.stringify(t.fragment)}`, () => {
-      expect(withFragment(t.input, t.fragment)).toBe(t.out);
-    });
-  }
+  it.each(tests)("$input + $fragment", (t) => {
+    expect(withFragment(t.input, t.fragment)).toBe(t.out);
+  });
 
   it("fast-path: appends '#hash' to normalized input", () => {
     expect(withFragment("https://a.com/b", "h")).toBe("https://a.com/b#h");
@@ -511,12 +508,14 @@ describe("withPort (plan 021)", () => {
   it("no-op on relative input", () => {
     expect(withPort("/only/path", 8080)).toBe("/only/path");
   });
-  it("rejects invalid ports", () => {
+  it("rejects invalid ports — boundary values", () => {
     expect(() => withPort("http://a.com/", 0)).toThrow(TypeError);
     expect(() => withPort("http://a.com/", 65_536)).toThrow(TypeError);
     expect(() => withPort("http://a.com/", -1)).toThrow(TypeError);
     expect(() => withPort("http://a.com/", 1.5)).toThrow(TypeError);
     expect(() => withPort("http://a.com/", "abc")).toThrow(TypeError);
+  });
+  it("rejects empty string port", () => {
     expect(() => withPort("http://a.com/", "")).toThrow(TypeError);
   });
 });
@@ -595,8 +594,8 @@ describe("withPathParameters (issue #243)", () => {
   it("substitutes multiple placeholders", () => {
     expect(
       withPathParameters("/users/{userId}/posts/{postId}", {
-        userId: "42",
         postId: "hello",
+        userId: "42",
       }),
     ).toBe("/users/42/posts/hello");
   });
@@ -612,7 +611,7 @@ describe("withPathParameters (issue #243)", () => {
       withPathParameters(
         "/users/{{userId}}",
         { userId: "abc" },
-        { interpolate: /\{\{([\s\S]+?)\}\}/g },
+        { interpolate: /\{\{(?<name>[\s\S]+?)\}\}/gu },
       ),
     ).toBe("/users/abc");
   });
@@ -629,9 +628,9 @@ describe("withPathParameters (issue #243)", () => {
     expect(() => withPathParameters("/x/{missing}", {}, { onMissing: "throw" })).toThrow(TypeError);
   });
   it("rejects non-global interpolate regex", () => {
-    expect(() => withPathParameters("/x/{v}", { v: "y" }, { interpolate: /\{(.+?)\}/ })).toThrow(
-      TypeError,
-    );
+    expect(() =>
+      withPathParameters("/x/{v}", { v: "y" }, { interpolate: /\{(?<name>.+?)\}/u }),
+    ).toThrow(TypeError);
   });
   it("prototype pollution: __proto__ / constructor are not resolved from own props", () => {
     // No __proto__ own key on the params object → fall through onMissing.

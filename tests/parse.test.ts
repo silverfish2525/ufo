@@ -91,94 +91,94 @@ describe("parseURL", () => {
     {
       input: "javascript:alert('hello')",
       out: {
-        protocol: "javascript:",
         auth: "",
+        hash: "",
         host: "",
         href: "javascript:alert('hello')",
         pathname: "alert('hello')",
+        protocol: "javascript:",
         search: "",
-        hash: "",
       },
     },
     {
       input: "\0javascrIpt:alert('hello')",
       out: {
-        protocol: "javascript:",
         auth: "",
+        hash: "",
         host: "",
         href: "javascrIpt:alert('hello')",
         pathname: "alert('hello')",
+        protocol: "javascript:",
         search: "",
-        hash: "",
       },
     },
     {
       input: "https://domain.test:3000#owo",
       out: {
-        protocol: "https:",
         auth: "",
+        hash: "#owo",
         host: "domain.test:3000",
         pathname: "",
+        protocol: "https:",
         search: "",
-        hash: "#owo",
       },
     },
     {
       input: "Https://domain.test:3000#owo",
       out: {
-        protocol: "https:",
         auth: "",
+        hash: "#owo",
         host: "domain.test:3000",
         pathname: "",
+        protocol: "https:",
         search: "",
-        hash: "#owo",
       },
     },
     {
       input: "data:image/png;base64,aaa//bbbbbb/ccc",
       out: {
-        protocol: "data:",
         auth: "",
+        hash: "",
         host: "",
         href: "data:image/png;base64,aaa//bbbbbb/ccc",
         pathname: "image/png;base64,aaa//bbbbbb/ccc",
+        protocol: "data:",
         search: "",
-        hash: "",
       },
     },
     {
       input: "blob:https://video_url",
       out: {
-        protocol: "blob:",
         auth: "",
+        hash: "",
         host: "",
         href: "blob:https://video_url",
         pathname: "https://video_url",
+        protocol: "blob:",
         search: "",
-        hash: "",
       },
     },
     {
       input: "\0https://invalid.com",
       out: {
-        protocol: "https:",
         auth: "",
+        hash: "",
         host: "invalid.com",
         pathname: "",
+        protocol: "https:",
         search: "",
-        hash: "",
       },
     },
     {
       input: "\0javascript:alert('hello')",
       out: {
-        protocol: "javascript:",
         auth: "",
+        hash: "",
         host: "",
         href: "javascript:alert('hello')",
         pathname: "alert('hello')",
+        protocol: "javascript:",
         search: "",
-        hash: "",
       },
     },
 
@@ -187,79 +187,79 @@ describe("parseURL", () => {
     {
       input: "java\tscript:alert('hello')",
       out: {
-        protocol: "javascript:",
-        pathname: "alert('hello')",
-        href: "javascript:alert('hello')",
         auth: "",
-        host: "",
-        search: "",
         hash: "",
+        host: "",
+        href: "javascript:alert('hello')",
+        pathname: "alert('hello')",
+        protocol: "javascript:",
+        search: "",
       },
     },
     {
       input: "java\nscript:alert(1)",
       out: {
-        protocol: "javascript:",
-        pathname: "alert(1)",
-        href: "javascript:alert(1)",
         auth: "",
-        host: "",
-        search: "",
         hash: "",
+        host: "",
+        href: "javascript:alert(1)",
+        pathname: "alert(1)",
+        protocol: "javascript:",
+        search: "",
       },
     },
     {
       input: "JAVA\tSCRIPT:alert(1)",
       out: {
-        protocol: "javascript:",
-        pathname: "alert(1)",
-        href: "JAVASCRIPT:alert(1)",
         auth: "",
-        host: "",
-        search: "",
         hash: "",
+        host: "",
+        href: "JAVASCRIPT:alert(1)",
+        pathname: "alert(1)",
+        protocol: "javascript:",
+        search: "",
       },
     },
     {
       input: "vb\tscript:msgbox 1",
       out: {
-        protocol: "vbscript:",
-        pathname: "msgbox 1",
-        href: "vbscript:msgbox 1",
         auth: "",
-        host: "",
-        search: "",
         hash: "",
+        host: "",
+        href: "vbscript:msgbox 1",
+        pathname: "msgbox 1",
+        protocol: "vbscript:",
+        search: "",
       },
     },
     {
       input: "da\tta:text/html,x",
       out: {
-        protocol: "data:",
-        pathname: "text/html,x",
-        href: "data:text/html,x",
         auth: "",
-        host: "",
-        search: "",
         hash: "",
+        host: "",
+        href: "data:text/html,x",
+        pathname: "text/html,x",
+        protocol: "data:",
+        search: "",
       },
     },
     {
       input: "bl\tob:https://video_url",
       out: {
-        protocol: "blob:",
-        pathname: "https://video_url",
-        href: "blob:https://video_url",
         auth: "",
-        host: "",
-        search: "",
         hash: "",
+        host: "",
+        href: "blob:https://video_url",
+        pathname: "https://video_url",
+        protocol: "blob:",
+        search: "",
       },
     },
   ];
 
   it.each(tests)("$input", (t) => {
-    expect(structuredClone(parseURL(t.input))).toEqual(t.out);
+    expect(structuredClone(parseURL(t.input))).toStrictEqual(t.out);
   });
 
   it("sEC-01: hasProtocol and isScriptProtocol agree on tampered javascript scheme", () => {
@@ -271,7 +271,7 @@ describe("parseURL", () => {
     expect(isScriptProtocol(parsed.protocol)).toBe(true);
   });
 
-  // FIXME: SEC-03/SEC-04 — plan 004 flips these to correct behavior in a later commit.
+  // Known-issue: SEC-03/SEC-04 — plan 004 flips these to correct behavior in a later commit.
   // These cases pin the current buggy behavior so the fix diff is auditable.
   // Attack patterns tested as strings; no HTTP request is issued.
   describe("sEC-03: scheme validation (WHATWG/RFC 3986)", () => {
@@ -279,7 +279,7 @@ describe("parseURL", () => {
     it("rejects digit-leading schemes (no protocol captured)", () => {
       const r = parseURL("123://foo.com/x");
       // Falls through to parsePath: protocol is absent/empty.
-      expect(r.protocol ?? "").toBe("");
+      expect(r.protocol).toBeUndefined();
       // Falls through to parsePath: pathname holds the raw string.
       expect(r.pathname + r.search + r.hash).toBe("123://foo.com/x");
     });
@@ -338,8 +338,8 @@ describe("parseURL", () => {
 
     // Fuzz-style: multi-@ combinations verifying host never leaks.
     // Attack patterns tested as strings; no HTTP request is issued.
-    const _hosts = ["example.com", "10.0.0.1", "a.b.c.d", "localhost"];
-    const _userinfos = [
+    const hosts = ["example.com", "10.0.0.1", "a.b.c.d", "localhost"];
+    const userinfos = [
       "u@v",
       "u@v@w",
       "%40u@v",
@@ -351,99 +351,101 @@ describe("parseURL", () => {
       "x@y%40z",
       "trailing@",
     ];
-    const _tails = ["/p", "/p?q=1", "/p#f", ""];
-    for (const _h of _hosts) {
-      for (const _u of _userinfos) {
-        for (const _t of _tails) {
-          const _url = `http://${_u}@${_h}${_t}`;
-          it(`host resolves to "${_h}" for ${_url}`, () => {
-            expect(parseURL(_url).host).toBe(_h);
+    const tails = ["/p", "/p?q=1", "/p#f", ""];
+    // oxlint-disable vitest/prefer-each -- triple-nested loop with conditional break; not expressible as it.each
+    for (const h of hosts) {
+      for (const u of userinfos) {
+        for (const t of tails) {
+          const url = `http://${u}@${h}${t}`;
+          it(`host resolves to "${h}" for ${url}`, () => {
+            expect(parseURL(url).host).toBe(h);
           });
-          if (_tails.indexOf(_t) === 0 && _userinfos.indexOf(_u) === 0) {
+          if (tails.indexOf(t) === 0 && userinfos.indexOf(u) === 0) {
             // Keep the total to ~20 by breaking after we've hit representative combos.
             break;
           }
         }
       }
     }
+    // oxlint-enable vitest/prefer-each
   });
 
   describe("cORR-06: opaque-scheme URIs (mailto:, tel:, urn:, http:foo, sms:)", () => {
     // RFC 3986 §3: `scheme:opaque-part`. better-ufo surfaces opaque-part as `pathname` (Option A;
-    // matches WHATWG `new URL("mailto:...").pathname`).
+    // Matches WHATWG `new URL("mailto:...").pathname`).
     it("populates protocol and pathname for mailto:", () => {
       expect(parseURL("mailto:a@b.com")).toMatchObject({
-        protocol: "mailto:",
         auth: "",
+        hash: "",
         host: "",
         pathname: "a@b.com",
+        protocol: "mailto:",
         search: "",
-        hash: "",
       });
     });
 
     it("populates protocol and pathname for tel:", () => {
       expect(parseURL("tel:+1-555-1234")).toMatchObject({
-        protocol: "tel:",
         auth: "",
+        hash: "",
         host: "",
         pathname: "+1-555-1234",
+        protocol: "tel:",
         search: "",
-        hash: "",
       });
     });
 
     it("populates protocol and pathname for urn: (opaque-part may contain colons)", () => {
       expect(parseURL("urn:isbn:0451450523")).toMatchObject({
-        protocol: "urn:",
         auth: "",
+        hash: "",
         host: "",
         pathname: "isbn:0451450523",
+        protocol: "urn:",
         search: "",
-        hash: "",
       });
     });
 
     it("populates protocol and pathname for sms:", () => {
       expect(parseURL("sms:+15551234")).toMatchObject({
-        protocol: "sms:",
         auth: "",
+        hash: "",
         host: "",
         pathname: "+15551234",
+        protocol: "sms:",
         search: "",
-        hash: "",
       });
     });
 
     it("treats scheme-without-slash as opaque (http:foo)", () => {
       expect(parseURL("http:foo")).toMatchObject({
-        protocol: "http:",
         auth: "",
+        hash: "",
         host: "",
         pathname: "foo",
+        protocol: "http:",
         search: "",
-        hash: "",
       });
     });
 
     it("splits query and fragment from opaque-part when present", () => {
       expect(parseURL("mailto:a@b.com?subject=hi#frag")).toMatchObject({
-        protocol: "mailto:",
         auth: "",
+        hash: "#frag",
         host: "",
         pathname: "a@b.com",
+        protocol: "mailto:",
         search: "?subject=hi",
-        hash: "#frag",
       });
     });
 
     // Regression control: hierarchical URLs still parse the same way (host branch, not opaque).
     it("regression: http://foo still hits the hierarchical branch (host = 'foo')", () => {
       expect(parseURL("http://foo")).toMatchObject({
-        protocol: "http:",
         auth: "",
         host: "foo",
         pathname: "",
+        protocol: "http:",
       });
     });
 
@@ -457,7 +459,7 @@ describe("parseURL", () => {
     });
 
     // Round-trip: stringifyParsedURL(parseURL(x)) === x for every opaque URL.
-    for (const url of [
+    const opaqueRoundtrips = [
       "mailto:a@b.com",
       "tel:+1-555-1234",
       "urn:isbn:0451450523",
@@ -465,11 +467,10 @@ describe("parseURL", () => {
       "http:foo",
       "data:text/plain,x",
       "mailto:a@b.com?subject=hi#frag",
-    ]) {
-      it(`round-trip: stringifyParsedURL(parseURL(${JSON.stringify(url)})) === input`, () => {
-        expect(stringifyParsedURL(parseURL(url))).toBe(url);
-      });
-    }
+    ];
+    it.each(opaqueRoundtrips)("round-trip: stringifyParsedURL(parseURL(%s)) === input", (url) => {
+      expect(stringifyParsedURL(parseURL(url))).toBe(url);
+    });
   });
 });
 
@@ -568,7 +569,7 @@ describe("parseFilename", () => {
   ] as const;
 
   it("works", () => {
-    expect(parseFilename("/path/to/filename.ext")).toEqual("filename.ext");
+    expect(parseFilename("/path/to/filename.ext")).toBe("filename.ext");
   });
 
   it.each(tests)("$input", (t) => {
@@ -579,50 +580,50 @@ describe("parseFilename", () => {
 describe("parseAuth", () => {
   it("splits username and password on the first colon", () => {
     expect(parseAuth("user:pass")).toStrictEqual({
-      username: "user",
       password: "pass",
+      username: "user",
     });
   });
 
   it("returns an empty password when there is no colon", () => {
     expect(parseAuth("user")).toStrictEqual({
-      username: "user",
       password: "",
+      username: "user",
     });
   });
 
   it("returns empty username and password for an empty string", () => {
     expect(parseAuth("")).toStrictEqual({
-      username: "",
       password: "",
+      username: "",
     });
   });
 
   it("preserves colons in the password (RFC 3986 §3.2.1 — first colon splits)", () => {
     expect(parseAuth("user:pa:ss")).toStrictEqual({
-      username: "user",
       password: "pa:ss",
+      username: "user",
     });
   });
 
   it("handles a leading colon (empty username, non-empty password)", () => {
     expect(parseAuth(":pw")).toStrictEqual({
-      username: "",
       password: "pw",
+      username: "",
     });
   });
 
   it("handles a trailing colon (username, empty password)", () => {
     expect(parseAuth("user:")).toStrictEqual({
-      username: "user",
       password: "",
+      username: "user",
     });
   });
 
   it("handles multiple consecutive colons in the password", () => {
     expect(parseAuth("u::::p")).toStrictEqual({
-      username: "u",
       password: ":::p",
+      username: "u",
     });
   });
 });
@@ -682,7 +683,7 @@ describe("parseHost — IPv6", () => {
   it("keeps IPv6 zone-id inside the hostname verbatim (see TODO(v2))", () => {
     // Zone-id normalization is deferred (see TODO(v2) comment in src/parse.ts).
     // For now assert current behavior so the deferral is explicit and any change
-    // to zone-id handling has to update this test.
+    // To zone-id handling has to update this test.
     // Note: decode() percent-decodes the hostname, so %25 -> % in the returned value.
     expect(parseHost("[fe80::1%25eth0]:80")).toStrictEqual({
       hostname: "[fe80::1%eth0]",
@@ -738,31 +739,31 @@ describe("parseURL — IPv6 round-trip", () => {
 });
 
 describe("sEC-23: whole-input tab/newline strip (WHATWG step 1)", () => {
-  it("strips \\t from host", () => {
+  it(String.raw`strips \t from host`, () => {
     expect(parseURL("http://a\t.b/").host).toBe("a.b");
   });
-  it("strips \\n from host", () => {
+  it(String.raw`strips \n from host`, () => {
     expect(parseURL("http://a\n.b/").host).toBe("a.b");
   });
-  it("strips \\r from host", () => {
+  it(String.raw`strips \r from host`, () => {
     expect(parseURL("http://a\r.b/").host).toBe("a.b");
   });
-  it("strips \\t from pathname", () => {
+  it(String.raw`strips \t from pathname`, () => {
     expect(parseURL("http://a.b/foo\tbar").pathname).toBe("/foobar");
   });
-  it("strips \\t from query", () => {
+  it(String.raw`strips \t from query`, () => {
     expect(parseURL("http://a.b/?x=1\t2").search).toBe("?x=12");
   });
-  it("strips \\t from fragment", () => {
+  it(String.raw`strips \t from fragment`, () => {
     expect(parseURL("http://a.b/#foo\tbar").hash).toBe("#foobar");
   });
-  it("strips \\t from scheme (dangerous-scheme fast path unchanged)", () => {
+  it(String.raw`strips \t from scheme (dangerous-scheme fast path unchanged)`, () => {
     expect(parseURL("java\nscript:alert(1)").protocol).toBe("javascript:");
   });
 });
 
 describe("parseFilename edge cases", () => {
-  const cases: Array<[string, { strict?: boolean } | undefined, string | undefined]> = [
+  const cases: [string, { strict?: boolean } | undefined, string | undefined][] = [
     ["filename.ext", undefined, "filename.ext"],
     ["filename.ext", { strict: true }, "filename.ext"],
     ["/filename.ext", undefined, "filename.ext"],
@@ -776,10 +777,10 @@ describe("parseFilename edge cases", () => {
     ["/", undefined, undefined],
   ];
   const labeledCases = cases.map(([input, opts, expected]) => ({
-    input,
-    opts,
     expected,
-    name: `${JSON.stringify(input)} ${opts?.strict ? "(strict)" : ""}`,
+    input,
+    name: `${JSON.stringify(input)} ${opts?.strict === true ? "(strict)" : ""}`,
+    opts,
   }));
   it.each(labeledCases)("$name", ({ input, opts, expected }) => {
     expect(parseFilename(input, opts)).toBe(expected);

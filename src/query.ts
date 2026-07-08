@@ -7,7 +7,7 @@ export type QueryValue =
   | undefined
   | null
   | boolean
-  | Array<QueryValue>
+  | QueryValue[]
   // oxlint-disable-next-line typescript/no-explicit-any -- `unknown` breaks literal-preserving key ordering in type-level tests
   | Record<string, any>;
 
@@ -62,16 +62,16 @@ function appendQueryParameter(object: ParsedQuery, rawKey: string, rawValue: str
 export function parseQuery<T extends ParsedQuery = ParsedQuery>(parametersString?: string): T;
 export function parseQuery(parametersString?: string): ParsedQuery;
 export function parseQuery(parametersString = ""): ParsedQuery {
-  // TODO(v2): Use EmptyObject() for better perf (see unjs/ufo#290).
+  // V2: Use EmptyObject() for better perf (see unjs/ufo#290).
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.create(null) returns any; intentional for prototype-pollution safety
   const object = Object.create(null) as ParsedQuery;
   let keyStart = -1;
   let keyEnd = -1;
   const stringLength = parametersString.length;
 
-  for (let index = parametersString[0] === "?" ? 1 : 0; index <= stringLength; index++) {
+  for (let index = parametersString.startsWith("?") ? 1 : 0; index <= stringLength; index += 1) {
     const isEnd = index === stringLength;
-    const character = isEnd ? AMPERSAND_CHAR_CODE : parametersString.charCodeAt(index);
+    const character = isEnd ? AMPERSAND_CHAR_CODE : parametersString.codePointAt(index);
 
     if (character === AMPERSAND_CHAR_CODE) {
       if (keyStart !== -1) {
@@ -126,28 +126,29 @@ export function encodeQueryItem<const K extends string, const V extends QueryVal
 ): StringifyQueryItem<K, V>;
 export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): string;
 export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): string {
-  if (typeof value === "number" || typeof value === "boolean") {
-    value = String(value);
+  let normalizedValue: QueryValue | QueryValue[] = value;
+  if (typeof normalizedValue === "number" || typeof normalizedValue === "boolean") {
+    normalizedValue = String(normalizedValue);
   }
 
-  if (Array.isArray(value)) {
-    return value
+  if (Array.isArray(normalizedValue)) {
+    return normalizedValue
       .map(
         (_value: QueryValue) =>
-          `${encodeQueryKey(key)}=${_value == null || _value === "" ? "" : encodeQueryValue(_value)}`,
+          `${encodeQueryKey(key)}=${_value === null || _value === undefined || _value === "" ? "" : encodeQueryValue(_value)}`,
       )
       .join("&");
   }
 
-  if (value === undefined) {
+  if (normalizedValue === undefined) {
     return "";
   }
 
-  if (value === null || value === "") {
+  if (normalizedValue === null || normalizedValue === "") {
     return `${encodeQueryKey(key)}=`;
   }
 
-  return `${encodeQueryKey(key)}=${encodeQueryValue(value)}`;
+  return `${encodeQueryKey(key)}=${encodeQueryValue(normalizedValue)}`;
 }
 
 /**

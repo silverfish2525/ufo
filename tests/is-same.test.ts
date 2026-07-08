@@ -11,15 +11,11 @@ describe("isSamePath", () => {
 
   const notSamePaths = [["/foo", "/bar"]];
 
-  for (const [u1 = "", u2 = ""] of samePaths) {
-    it(`${u1} == ${u2}`, () => {
-      expect(isSamePath(u1, u2)).toBe(true);
-    });
-  }
+  it.each(samePaths)("%s == %s", (u1 = "", u2 = "") => {
+    expect(isSamePath(u1, u2)).toBe(true);
+  });
 
-  for (const [u1 = "", u2 = ""] of notSamePaths) {
-    it(`${u1} != ${u2}`, () => {
-      expect(isSamePath(u1, u2)).toBe(false);
-    });
-  }
+  it.each(notSamePaths)("%s != %s", (u1 = "", u2 = "") => {
+    expect(isSamePath(u1, u2)).toBe(false);
+  });
 });

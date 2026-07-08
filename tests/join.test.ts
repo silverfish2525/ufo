@@ -27,15 +27,13 @@ const joinURLTests = [
 ] as const;
 
 describe("joinURL", () => {
-  for (const t of joinURLTests) {
-    it(`joinURL(${t.input.map((i) => JSON.stringify(i)).join(", ")}) === ${JSON.stringify(t.out)}`, () => {
-      // @ts-expect-error - joinURLTests intentionally mixes signature-invalid
-      // fixtures (empty tuple, undefined base) with valid ones to verify
-      // runtime tolerance. The tuple union widens `t.input` beyond joinURL's
-      // declared `(base: string, ...rest: string[])` signature.
-      expect(joinURL(...t.input)).toBe(t.out);
-    });
-  }
+  it.each(joinURLTests)("joinURL($input) === $out", (t) => {
+    // @ts-expect-error - joinURLTests intentionally mixes signature-invalid
+    // Fixtures (empty tuple, undefined base) with valid ones to verify
+    // Runtime tolerance. The tuple union widens `t.input` beyond joinURL's
+    // Declared `(base: string, ...rest: string[])` signature.
+    expect(joinURL(...t.input)).toBe(t.out);
+  });
 });
 
 describe("joinRelativeURL", () => {
@@ -60,15 +58,13 @@ describe("joinRelativeURL", () => {
     },
   ];
 
-  for (const t of relativeTests) {
-    it(`joinRelativeURL(${t.input.map((i) => JSON.stringify(i)).join(", ")}) === ${JSON.stringify(t.out)}`, () => {
-      // @ts-expect-error - relativeTests inherits joinURLTests' heterogeneous
-      // fixture shape (empty tuple, undefined-base cases) plus additional
-      // relative-path cases; TS can't narrow the union to joinRelativeURL's
-      // `string[]` rest-parameter across all iterations.
-      expect(joinRelativeURL(...t.input)).toBe(t.out);
-    });
-  }
+  it.each(relativeTests)("joinRelativeURL($input) === $out", (t) => {
+    // @ts-expect-error - relativeTests inherits joinURLTests' heterogeneous
+    // Fixture shape (empty tuple, undefined-base cases) plus additional
+    // Relative-path cases; TS can't narrow the union to joinRelativeURL's
+    // `string[]` rest-parameter across all iterations.
+    expect(joinRelativeURL(...t.input)).toBe(t.out);
+  });
 });
 
 // SEC-02 — leading '//' after join must not become a protocol-relative URL.

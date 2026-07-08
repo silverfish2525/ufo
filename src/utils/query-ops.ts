@@ -1,7 +1,9 @@
-import type { Refine, WithoutQuery, WithQueryResult } from "../_types";
+import type { Refine, WithQueryResult, WithoutQuery } from "../_types";
 import type { ParsedQuery, QueryObject } from "../query";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via parse→utils barrel
 import { parseURL } from "../parse";
 import { parseQuery, stringifyQuery } from "../query";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via _modify→parse→utils barrel
 import { modifyParsedURL } from "./_modify";
 
 /**
@@ -13,6 +15,9 @@ import { modifyParsedURL } from "./_modify";
  * withQuery("/foo?page=a", { token: "secret" }); // "/foo?page=a&token=secret"
  * ```
  *
+ * @param input - The URL string.
+ * @param query - Query parameters to merge into the URL.
+ * @returns The URL with the query parameters applied.
  * @group utils
  */
 export function withQuery<const Input extends string, const Q extends QueryObject>(
@@ -38,6 +43,9 @@ export function withQuery(input: string, query: QueryObject): string {
  * filterQuery("/foo?bar=1&baz=2", (key) => key !== "bar"); // "/foo?baz=2"
  * ```
  *
+ * @param input - The URL string to filter.
+ * @param predicate - A function that returns `true` for entries to keep.
+ * @returns The URL with only the query entries passing the predicate.
  * @group utils
  */
 export function filterQuery(
@@ -73,6 +81,8 @@ export function filterQuery(
  * getQuery("http://foo.com/foo?test=123&unicode=%E5%A5%BD");
  * // { test: "123", unicode: "好" }
  * ```
+ * @param input - The URL string to parse.
+ * @returns The parsed query object.
  * @group utils
  */
 // oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
@@ -92,12 +102,18 @@ export function withoutQuery(input: string): string;
  * // Returns "https://a.com/b#h"
  * ```
  *
+ * @param input - The URL string.
+ * @returns The URL with the query string removed.
  * @group utils
  */
 export function withoutQuery(input: string): string {
   const qIdx = input.indexOf("?");
-  if (qIdx === -1) return input;
+  if (qIdx === -1) {
+    return input;
+  }
   const hIdx = input.indexOf("#", qIdx);
-  if (hIdx === -1) return input.slice(0, qIdx);
+  if (hIdx === -1) {
+    return input.slice(0, qIdx);
+  }
   return input.slice(0, qIdx) + input.slice(hIdx);
 }

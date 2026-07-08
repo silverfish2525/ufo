@@ -1,14 +1,19 @@
 import type { JoinURLOptions } from "./protocol";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via protocol→utils barrel
+import { hasProtocol } from "./protocol";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via _modify→parse→utils barrel
 import { normalizeProtocolRelative } from "./_modify";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via join→_modify→parse→utils barrel
 import { joinURL } from "./join";
 import { isEmptyURL } from "./predicates";
-import { hasProtocol } from "./protocol";
 import { withoutTrailingSlash } from "./slash";
 
 const URL_BOUNDARY_CHARS = new Set(["/", "?", "#"]);
 
 function isAtBaseBoundary(input: string, baseLen: number): boolean {
-  if (input.length === baseLen) return true;
+  if (input.length === baseLen) {
+    return true;
+  }
   const char = input[baseLen];
   return char !== undefined && URL_BOUNDARY_CHARS.has(char);
 }
@@ -31,19 +36,23 @@ function isAtBaseBoundary(input: string, baseLen: number): boolean {
  * withBase("//host/x", "/", { allowProtocolRelative: true }); // "//host/x"
  * ```
  *
+ * @param input - The URL or pathname.
+ * @param base - The base path to prepend.
+ * @param [opts] - Options controlling open-redirect hardening.
+ * @returns The URL with the base prepended (or unchanged if already present).
  * @group utils
  */
 export function withBase(input: string, base: string, opts?: JoinURLOptions): string {
   if (isEmptyURL(base) || hasProtocol(input)) {
     return normalizeProtocolRelative(input, base, opts);
   }
-  const _input = normalizeProtocolRelative(input, base, opts);
-  const _base = withoutTrailingSlash(base);
-  if (_input.startsWith(_base) && isAtBaseBoundary(_input, _base.length)) {
+  const normalizedInput = normalizeProtocolRelative(input, base, opts);
+  const baseNorm = withoutTrailingSlash(base);
+  if (normalizedInput.startsWith(baseNorm) && isAtBaseBoundary(normalizedInput, baseNorm.length)) {
     // Boundary chars: "/", "?", "#" — fragment must not defeat the check.
-    return _input;
+    return normalizedInput;
   }
-  return joinURL(_base, _input);
+  return joinURL(baseNorm, normalizedInput);
 }
 
 /**
@@ -57,20 +66,23 @@ export function withBase(input: string, base: string, opts?: JoinURLOptions): st
  * withoutBase("/foo/bar", "/foo"); // "/bar"
  * ```
  *
+ * @param input - The URL or pathname.
+ * @param base - The base path to remove.
+ * @returns The URL with the base removed (or unchanged if not present).
  * @group utils
  */
 export function withoutBase(input: string, base: string): string {
   if (isEmptyURL(base)) {
     return input;
   }
-  const _base = withoutTrailingSlash(base);
-  if (!input.startsWith(_base)) {
+  const baseNorm = withoutTrailingSlash(base);
+  if (!input.startsWith(baseNorm)) {
     return input;
   }
   // Boundary chars: "/", "?", "#" — fragment must not defeat the check.
-  if (!isAtBaseBoundary(input, _base.length)) {
+  if (!isAtBaseBoundary(input, baseNorm.length)) {
     return input;
   }
-  const trimmed = input.slice(_base.length).replace(/^\/+/, "");
+  const trimmed = input.slice(baseNorm.length).replace(/^\/+/u, "");
   return `/${trimmed}`;
 }

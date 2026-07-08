@@ -219,11 +219,11 @@ describe("decodeQueryValue", () => {
     { input: "hello+world", out: "hello world" },
     { input: "a=1%26b=2", out: "a=1&b=2" },
     { input: "%2Fpath%2F", out: "/path/" },
-    // decodeQueryValue converts '+' to space (application/x-www-form-urlencoded).
+    // DecodeQueryValue converts '+' to space (application/x-www-form-urlencoded).
     { input: "raw+with+space", out: "raw with space" },
     { input: "%2B", out: "+" },
     { input: "", out: "" },
-    // malformed percent-triple falls through decode()'s try/catch.
+    // Malformed percent-triple falls through decode()'s try/catch.
     { input: "%zz", out: "%zz" },
   ];
   it.each(tests)("$input", (t) => {
@@ -238,8 +238,8 @@ describe("decodeQueryValue", () => {
 });
 
 describe("decodePath", () => {
-  // decodePath is the counterpart of encodePath and preserves `%2F` (encoded
-  // slash) so paths never lose their segment boundaries.
+  // DecodePath is the counterpart of encodePath and preserves `%2F` (encoded
+  // Slash) so paths never lose their segment boundaries.
   it("preserves %2F as literal %2F (does not collapse slashes)", () => {
     expect(decodePath("%2Fpath%2Fto%2Ffile")).toBe("%2Fpath%2Fto%2Ffile");
     expect(decodePath("a%2Fb")).toBe("a%2Fb");

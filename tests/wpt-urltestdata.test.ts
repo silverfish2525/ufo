@@ -1,6 +1,6 @@
 // WPT wire: 100-case subset of special-scheme cases in urltestdata.json.
 // NOTE: parseURL(input, defaultProto) does not accept a full base URL; base-relative
-// cases are filtered out (require resolveURL which is plan 006's territory).
+// Cases are filtered out (require resolveURL which is plan 006's territory).
 // Divergent cases listed in EXPECTED_FAILURES run via it.fails —
 import { describe, expect, it } from "vite-plus/test";
 import { parseURL } from "../src";
@@ -28,7 +28,7 @@ const SPECIAL_PREFIXES = ["http:", "https:", "ws:", "wss:", "ftp:", "file:"];
 
 const specialCases = allCases.filter(
   (c) =>
-    !c.failure &&
+    c.failure !== true &&
     typeof c.input === "string" &&
     SPECIAL_PREFIXES.some((p) => c.input.toLowerCase().startsWith(p)),
 );
@@ -40,17 +40,17 @@ const SKIP_LIST: ReadonlySet<string> = new Set<string>();
 
 // When a fix lands, remove the entry and confirm the case passes as plain it().
 const EXPECTED_FAILURES: ReadonlySet<string> = new Set<string>([
-  // backslash-in-special-scheme normalization — WPT normalizes \ → /; better-ufo defers to plan 004 gating
+  // Backslash-in-special-scheme normalization — WPT normalizes \ → /; better-ufo defers to plan 004 gating
   "http:\\\\foo.com\\",
   "http:\\\\a\\b:c\\d@foo.com\\",
-  "http:\\\\www.google.com\\foo",
-  // tab/newline in host — WPT strips them; better-ufo does not
+  String.raw`http:\\www.google.com\foo`,
+  // Tab/newline in host — WPT strips them; better-ufo does not
   "http://example\t.\norg",
-  // empty-password stripping — WPT strips trailing ":" from auth
+  // Empty-password stripping — WPT strips trailing ":" from auth
   "https://test:@test",
-  // empty credentials — WPT strips ":@"
+  // Empty credentials — WPT strips ":@"
   "https://:@test",
-  // single-slash relative-style — WPT resolves against base; better-ufo treats as opaque
+  // Single-slash relative-style — WPT resolves against base; better-ufo treats as opaque
   "http://f:21/ b ? d # e ",
   "http://f:/c",
   "http://f:\n/c",
@@ -64,28 +64,28 @@ const EXPECTED_FAILURES: ReadonlySet<string> = new Set<string>([
   "http://[::127.0.0.1]",
   "http://[0:0:0:0:0:0:13.1.68.3]",
   "http://[2001::1]:80",
-  // single-slash scheme-specific
+  // Single-slash scheme-specific
   "http:/example.com/",
   "ftp:/example.com/",
   "https:/example.com/",
   // "file:/example.com/" — plan 007 fixed: opaque-scheme path now surfaced correctly
   "ws:/example.com/",
   "wss:/example.com/",
-  // scheme-relative (no slashes) — WPT resolves against base
+  // Scheme-relative (no slashes) — WPT resolves against base
   "http:foo.com",
   "http:example.com/",
   "ftp:example.com/",
   "https:example.com/",
   "ws:example.com/",
   "wss:example.com/",
-  // file: scheme specifics
-  "file:c:\\foo\\bar.html",
+  // File: scheme specifics
+  String.raw`file:c:\foo\bar.html`,
   "file://test",
   "file://localhost",
   "file://localhost/",
   "file://localhost/test",
   "file:test",
-  // dot-segment normalization — WPT resolves ./.. etc.; better-ufo does not
+  // Dot-segment normalization — WPT resolves ./.. etc.; better-ufo does not
   "http://example.com/././foo",
   "http://example.com/./.foo",
   "http://example.com/foo/.",
@@ -101,9 +101,9 @@ const EXPECTED_FAILURES: ReadonlySet<string> = new Set<string>([
   "http://example.com////../..",
   "http://example.com/foo/bar//../..",
   "http://example.com/foo/bar//..",
-  // tab + U+0091 in path (exact bytes from WPT fixture)
+  // Tab + U+0091 in path (exact bytes from WPT fixture)
   // NB: `\t` is stripped whole-input per WHATWG step 1 (SEC-23);
-  // this case still fails because U+0091 handling differs.
+  // This case still fails because U+0091 handling differs.
   "http://example.com/foo\t\u0091%91",
   // Unicode path normalization
   "http://example.com/\u4F60\u597D\u4F60\u597D",
@@ -111,18 +111,18 @@ const EXPECTED_FAILURES: ReadonlySet<string> = new Set<string>([
   "http://example.com/\u202E/foo/\u202D/bar",
   // BOM in path
   "http://example.com/\uFEFF/foo",
-  // percent-encoding edge cases (U+00C2 U+00A9 = Latin-1 encoded ©)
+  // Percent-encoding edge cases (U+00C2 U+00A9 = Latin-1 encoded ©)
   "http://example.com/foo%2\u00C2\u00A9zbar",
-  // hash normalization — WPT expects empty string for bare "#"
+  // Hash normalization — WPT expects empty string for bare "#"
   "http://www.google.com/foo?bar=baz#",
   "http://www.google.com/foo?bar=baz# \u00BB",
-  // missing path — WPT adds trailing "/"
+  // Missing path — WPT adds trailing "/"
   "http://www.google.com",
-  // hex-encoded host
+  // Hex-encoded host
   "http://192.0x00A80001",
   // %2E in path — WPT resolves; better-ufo preserves
   "http://www/foo/%2E/html",
-  // default-port stripping — WPT strips default ports; better-ufo keeps them
+  // Default-port stripping — WPT strips default ports; better-ufo keeps them
   "http://foo:80/",
   "https://foo:443/",
   "ftp://foo:21/",
@@ -130,11 +130,12 @@ const EXPECTED_FAILURES: ReadonlySet<string> = new Set<string>([
 ]);
 
 describe("wPT urltestdata.json (special-scheme subset)", () => {
+  // oxlint-disable-next-line vitest/prefer-each -- conditional it.fails/it.todo per case; not expressible as it.each
   for (const c of subset) {
     const label = `${c.input}${c.base !== undefined && c.base !== "" ? ` (base: ${String(c.base)})` : ""}`;
 
     if (SKIP_LIST.has(c.input)) {
-      it.skip(`${label} [known divergence — skipped]`, () => {});
+      it.skip(`${label} [known divergence — better-ufo intentionally deviates]`, () => {});
       continue;
     }
 
@@ -144,11 +145,21 @@ describe("wPT urltestdata.json (special-scheme subset)", () => {
 
     runner(label, () => {
       const parsed = parseURL(c.input);
-      if (c.protocol !== undefined) expect(parsed.protocol).toBe(c.protocol);
-      if (c.host !== undefined) expect(parsed.host).toBe(c.host);
-      if (c.pathname !== undefined) expect(parsed.pathname).toBe(c.pathname);
-      if (c.search !== undefined) expect(parsed.search).toBe(c.search);
-      if (c.hash !== undefined) expect(parsed.hash).toBe(c.hash);
+      if (c.protocol !== undefined) {
+        expect(parsed.protocol).toBe(c.protocol);
+      }
+      if (c.host !== undefined) {
+        expect(parsed.host).toBe(c.host);
+      }
+      if (c.pathname !== undefined) {
+        expect(parsed.pathname).toBe(c.pathname);
+      }
+      if (c.search !== undefined) {
+        expect(parsed.search).toBe(c.search);
+      }
+      if (c.hash !== undefined) {
+        expect(parsed.hash).toBe(c.hash);
+      }
     });
   }
 });

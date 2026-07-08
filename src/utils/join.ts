@@ -1,12 +1,14 @@
 import type { JoinRelativeURLResult, JoinURLResult } from "../_types";
 import type { JoinURLOptions } from "./protocol";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via _modify→parse→utils barrel
 import { normalizeProtocolRelative } from "./_modify";
 import { isNonEmptyURL } from "./predicates";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via protocol→utils barrel
 import { hasProtocol } from "./protocol";
 import { withTrailingSlash } from "./slash";
 
-const JOIN_LEADING_SLASH_RE = /^\.?\//;
-const JOIN_SEGMENT_SPLIT_RE = /\/(?!\/)/;
+const JOIN_LEADING_SLASH_RE = /^\.?\//u;
+const JOIN_SEGMENT_SPLIT_RE = /\/(?!\/)/u;
 
 export function joinURL<const Base extends string, const Rest extends readonly string[]>(
   base: Base,
@@ -14,8 +16,8 @@ export function joinURL<const Base extends string, const Rest extends readonly s
 ): JoinURLResult<Base, Rest>;
 export function joinURL(base: string, ...input: string[]): string;
 export function joinURL(base: string, ...input: [...string[], JoinURLOptions]): string;
-export function joinURL(base: string, ...input: Array<string | JoinURLOptions>): string {
-  let opts: JoinURLOptions | undefined;
+export function joinURL(base: string, ...input: (string | JoinURLOptions)[]): string {
+  let opts: JoinURLOptions | undefined = undefined;
   const last = input.at(-1);
   if (last !== null && typeof last === "object" && !Array.isArray(last)) {
     opts = last;
@@ -29,8 +31,8 @@ export function joinURL(base: string, ...input: Array<string | JoinURLOptions>):
 
   for (const segment of segments) {
     if (url) {
-      const _segment = segment.replace(JOIN_LEADING_SLASH_RE, "");
-      url = withTrailingSlash(url) + _segment;
+      const seg = segment.replace(JOIN_LEADING_SLASH_RE, "");
+      url = withTrailingSlash(url) + seg;
     } else {
       url = segment;
     }
@@ -54,9 +56,10 @@ export function joinRelativeURL<const Base extends string, const Rest extends re
   base: Base,
   ...input: Rest
 ): JoinRelativeURLResult<Base, Rest>;
-export function joinRelativeURL(..._input: string[]): string;
-export function joinRelativeURL(..._input: string[]): string {
-  const input = _input.filter(Boolean);
+export function joinRelativeURL(...parts: string[]): string;
+// oxlint-disable-next-line eslint/complexity -- URL segment-joining algorithm inherently branches on protocol/relative/.. cases
+export function joinRelativeURL(...parts: string[]): string {
+  const input = parts.filter(Boolean);
 
   const segments: string[] = [];
 
@@ -75,32 +78,32 @@ export function joinRelativeURL(..._input: string[]): string {
           continue;
         }
         segments.pop();
-        segmentsDepth--;
+        segmentsDepth -= 1;
         continue;
       }
 
-      if (sindex === 1 && segments[segments.length - 1]?.endsWith(":/")) {
+      if (sindex === 1 && segments.at(-1)?.endsWith(":/") === true) {
         segments[segments.length - 1] += `/${s}`;
         continue;
       }
       segments.push(s);
-      segmentsDepth++;
+      segmentsDepth += 1;
     }
   }
 
   let url = segments.join("/");
 
   if (segmentsDepth >= 0) {
-    if (input[0]?.startsWith("/") && !url.startsWith("/")) {
+    if (input[0]?.startsWith("/") === true && !url.startsWith("/")) {
       url = `/${url}`;
-    } else if (input[0]?.startsWith("./") && !url.startsWith("./")) {
+    } else if (input[0]?.startsWith("./") === true && !url.startsWith("./")) {
       url = `./${url}`;
     }
   } else {
     url = "../".repeat(-1 * segmentsDepth) + url;
   }
 
-  if (input[input.length - 1]?.endsWith("/") && !url.endsWith("/")) {
+  if (input.at(-1)?.endsWith("/") === true && !url.endsWith("/")) {
     url += "/";
   }
 

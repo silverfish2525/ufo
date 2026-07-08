@@ -1,6 +1,6 @@
 import type { IsRelative } from "../_types";
 import { decode } from "../encoding";
-import { withLeadingSlash, withoutTrailingSlash, withTrailingSlash } from "./slash";
+import { withLeadingSlash, withTrailingSlash, withoutTrailingSlash } from "./slash";
 
 /**
  * Check if a path starts with `./` or `../`.
@@ -10,6 +10,8 @@ import { withLeadingSlash, withoutTrailingSlash, withTrailingSlash } from "./sla
  * isRelative("./foo"); // true
  * ```
  *
+ * @param inputString - The URL string to test.
+ * @returns `true` if the string starts with `"./"` or `"../"`.
  * @group utils
  */
 export function isRelative<const S extends string>(inputString: S): IsRelative<S>;
@@ -21,6 +23,8 @@ export function isRelative(inputString: string): boolean {
 /**
  * Checks if the input URL is empty or `/`.
  *
+ * @param url - The URL string to test.
+ * @returns `true` if the URL is empty or equals `"/"`.
  * @group utils
  */
 export function isEmptyURL(url: string): boolean {
@@ -30,6 +34,8 @@ export function isEmptyURL(url: string): boolean {
 /**
  * Checks if the input URL is neither empty nor `/`.
  *
+ * @param url - The URL string to test.
+ * @returns `true` if the URL is non-empty and not equals `"/"`.
  * @group utils
  */
 export function isNonEmptyURL(url: string): boolean {
@@ -45,6 +51,9 @@ export function isNonEmptyURL(url: string): boolean {
  * isSamePath("/foo", "/foo/"); // true
  * ```
  *
+ * @param p1 - First path string.
+ * @param p2 - Second path string.
+ * @returns `true` if both paths are the same ignoring trailing slash.
  * @group utils
  */
 export function isSamePath(p1: string, p2: string): boolean {
@@ -77,20 +86,26 @@ interface CompareURLOptions {
  * isEqual("/foo bar", "/foo%20bar", { encoding: true }); // false
  * ```
  *
+ * @param a - First URL string.
+ * @param b - Second URL string.
+ * @param [options] - Comparison options.
+ * @returns `true` if both URLs are considered equal under the given options.
  * @group utils
  */
 export function isEqual(a: string, b: string, options: CompareURLOptions = {}): boolean {
-  if (!options.trailingSlash) {
-    a = withTrailingSlash(a);
-    b = withTrailingSlash(b);
+  let lhs = a;
+  let rhs = b;
+  if (options.trailingSlash !== true) {
+    lhs = withTrailingSlash(lhs);
+    rhs = withTrailingSlash(rhs);
   }
-  if (!options.leadingSlash) {
-    a = withLeadingSlash(a);
-    b = withLeadingSlash(b);
+  if (options.leadingSlash !== true) {
+    lhs = withLeadingSlash(lhs);
+    rhs = withLeadingSlash(rhs);
   }
-  if (!options.encoding) {
-    a = decode(a);
-    b = decode(b);
+  if (options.encoding !== true) {
+    lhs = decode(lhs);
+    rhs = decode(rhs);
   }
-  return a === b;
+  return lhs === rhs;
 }

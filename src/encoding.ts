@@ -1,20 +1,20 @@
 import type { QueryValue } from "./query";
 import { toASCII } from "./punycode";
 
-const SLASH_RE = /\//g;
-const PLUS_RE = /\+/g;
+const SLASH_RE = /\//gu;
+const PLUS_RE = /\+/gu;
 
-const ENC_PIPE_RE = /%7c/gi;
-const ENC_SPACE_RE = /%20/g;
-const ENC_SLASH_RE = /%2f/gi;
-const ENC_ENC_SLASH_RE = /%252f/gi;
-const ENC_HASH_RESTORE_RE = /%(?:5e|7b|7d)/gi;
+const ENC_PIPE_RE = /%7c/giu;
+const ENC_SPACE_RE = /%20/gu;
+const ENC_SLASH_RE = /%2f/giu;
+const ENC_ENC_SLASH_RE = /%252f/giu;
+const ENC_HASH_RESTORE_RE = /%(?:5e|7b|7d)/giu;
 const ENC_HASH_RESTORE_MAP: Readonly<Record<string, string>> = Object.freeze({
   "%5e": "^",
   "%7b": "{",
   "%7d": "}",
 });
-const RAW_QUERY_ENCODE_RE = /[!#$&'(),/:;=?@|~]/g;
+const RAW_QUERY_ENCODE_RE = /[!#$&'(),/:;=?@|~]/gu;
 const RAW_QUERY_ENCODE_MAP: Readonly<Record<string, string>> = Object.freeze({
   "!": "%21",
   "#": "%23",
@@ -33,7 +33,7 @@ const RAW_QUERY_ENCODE_MAP: Readonly<Record<string, string>> = Object.freeze({
   "|": "%7C",
   "~": "%7E",
 });
-const RAW_PATH_ENCODE_RE = /[#&+?]/g;
+const RAW_PATH_ENCODE_RE = /[#&+?]/gu;
 const RAW_PATH_ENCODE_MAP: Readonly<Record<string, string>> = Object.freeze({
   "#": "%23",
   "&": "%26",
@@ -85,7 +85,7 @@ export function encodeQueryValue(input: QueryValue): string {
     encode(typeof input === "string" ? input : JSON.stringify(input))
       .replace(PLUS_RE, "%2B")
       .replace(ENC_SPACE_RE, "+")
-      // after encodeURI. `*` is in the map for parity but maps to itself (spec-exempt).
+      // After encodeURI. `*` is in the map for parity but maps to itself (spec-exempt).
       .replace(RAW_QUERY_ENCODE_RE, (c) => RAW_QUERY_ENCODE_MAP[c] ?? c)
   );
 }
@@ -97,6 +97,7 @@ export function encodeQueryValue(input: QueryValue): string {
  * @group encoding_utils
  *
  * @param text - string to encode
+ * @returns The percent-encoded query key string.
  */
 export function encodeQueryKey(text: string | number): string {
   return encodeQueryValue(text);
@@ -191,11 +192,11 @@ export function decodeQueryValue(text: string): string {
  *
  * @group encoding_utils
  */
-const HOST_STRUCTURAL_RE = /[/?#@]/g;
+const HOST_STRUCTURAL_RE = /[/?#@]/gu;
 const HOST_STRUCTURAL_ENCODE: Readonly<Record<string, string>> = Object.freeze({
+  "#": "%23",
   "/": "%2F",
   "?": "%3F",
-  "#": "%23",
   "@": "%40",
 });
 function encodeHostStructural(c: string): string {

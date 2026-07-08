@@ -1,6 +1,34 @@
 import type { Refine, WithFragment, WithoutFragment } from "../_types";
 import { encodeHash } from "../encoding";
+// oxlint-disable-next-line import/no-cycle -- structural cycle via _modify→parse→utils barrel
 import { modifyParsedURL } from "./_modify";
+
+/**
+ * Removes the fragment section from the URL.
+ *
+ * @example
+ *
+ * ```js
+ * withoutFragment("http://example.com/foo?q=123#bar")
+ * // Returns "http://example.com/foo?q=123"
+ * ```
+ *
+ * @group utils
+ */
+export function withoutFragment<const S extends string>(input: S): Refine<S, WithoutFragment<S>>;
+export function withoutFragment(input: string): string;
+export function withoutFragment(input: string): string {
+  if (
+    !input.includes("#") &&
+    !/[A-Z\\]/u.test(input) &&
+    !/^[a-z][a-z0-9+.-]*:\/\/[^/]*\/\//u.test(input)
+  ) {
+    return input;
+  }
+  return modifyParsedURL(input, (parsed) => {
+    parsed.hash = "";
+  });
+}
 
 /**
  * Adds or replaces the fragment section of the URL.
@@ -27,39 +55,13 @@ export function withFragment(input: string, hash: string): string {
   const hashIdx = input.indexOf("#");
   const preHash = hashIdx === -1 ? input : input.slice(0, hashIdx);
   if (
-    !/[A-Z\\]/.test(preHash) && // no uppercase, no backslash
-    !/^[a-z][a-z0-9+.-]*:\/\/[^/]*\/\//.test(preHash)
+    // No uppercase, no backslash
+    !/[A-Z\\]/u.test(preHash) &&
+    !/^[a-z][a-z0-9+.-]*:\/\/[^/]*\/\//u.test(preHash)
   ) {
     return `${preHash}#${encodeHash(hash)}`;
   }
   return modifyParsedURL(input, (parsed) => {
     parsed.hash = hash === "" ? "" : `#${encodeHash(hash)}`;
-  });
-}
-
-/**
- * Removes the fragment section from the URL.
- *
- * @example
- *
- * ```js
- * withoutFragment("http://example.com/foo?q=123#bar")
- * // Returns "http://example.com/foo?q=123"
- * ```
- *
- * @group utils
- */
-export function withoutFragment<const S extends string>(input: S): Refine<S, WithoutFragment<S>>;
-export function withoutFragment(input: string): string;
-export function withoutFragment(input: string): string {
-  if (
-    !input.includes("#") &&
-    !/[A-Z\\]/.test(input) &&
-    !/^[a-z][a-z0-9+.-]*:\/\/[^/]*\/\//.test(input)
-  ) {
-    return input;
-  }
-  return modifyParsedURL(input, (parsed) => {
-    parsed.hash = "";
   });
 }

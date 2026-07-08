@@ -2,20 +2,20 @@ import type { QueryObject } from "./query";
 import { decode, decodePath, encodeHash, encodeHost, encodePath } from "./encoding";
 import { parseAuth, parseHost, parseURL } from "./parse";
 import { parseQuery, stringifyQuery } from "./query";
-import { withoutLeadingSlash, withTrailingSlash } from "./utils";
+import { withTrailingSlash, withoutLeadingSlash } from "./utils";
 
 /**
  * @deprecated use native URL with `new URL(input)` or `parseURL(input)`
  */
 export class $URL implements URL {
-  protocol: string;
-  host: string;
-  auth: string;
-  pathname: string;
-  query: QueryObject = {};
-  hash: string;
+  public protocol: string;
+  public host: string;
+  public auth: string;
+  public pathname: string;
+  public query: QueryObject = {};
+  public hash: string;
 
-  constructor(input = "") {
+  public constructor(input = "") {
     if (typeof input !== "string") {
       throw new TypeError(`URL input should be string received ${typeof input} (${String(input)})`);
     }
@@ -30,38 +30,41 @@ export class $URL implements URL {
     this.hash = decode(parsed.hash);
   }
 
-  get hostname(): string {
+  public get hostname(): string {
     return parseHost(this.host).hostname;
   }
 
-  get port(): string {
+  public get port(): string {
     return parseHost(this.host).port ?? "";
   }
 
-  get username(): string {
+  public get username(): string {
     return parseAuth(this.auth).username;
   }
 
-  get password(): string {
+  public get password(): string {
     return parseAuth(this.auth).password || "";
   }
 
-  get hasProtocol(): number {
+  public get hasProtocol(): number {
     return this.protocol.length;
   }
 
-  get isAbsolute(): boolean {
-    return this.hasProtocol !== 0 || this.pathname[0] === "/";
+  public get isAbsolute(): boolean {
+    return this.hasProtocol !== 0 || this.pathname.startsWith("/");
   }
 
-  get search(): string {
+  public get search(): string {
     const q = stringifyQuery(this.query);
     return q.length > 0 ? `?${q}` : "";
   }
 
-  get searchParams(): URLSearchParams {
+  public get searchParams(): URLSearchParams {
     const p = new URLSearchParams();
     for (const name in this.query) {
+      if (!Object.hasOwn(this.query, name)) {
+        continue;
+      }
       const value = this.query[name];
       if (Array.isArray(value)) {
         for (const v of value) {
@@ -80,15 +83,15 @@ export class $URL implements URL {
     return p;
   }
 
-  get origin(): string {
+  public get origin(): string {
     return (this.protocol ? `${this.protocol}//` : "") + encodeHost(this.host);
   }
 
-  get fullpath(): string {
+  public get fullpath(): string {
     return encodePath(this.pathname) + this.search + encodeHash(this.hash);
   }
 
-  get encodedAuth(): string {
+  public get encodedAuth(): string {
     if (this.auth === "") {
       return "";
     }
@@ -96,7 +99,7 @@ export class $URL implements URL {
     return encodeURIComponent(username) + (password ? `:${encodeURIComponent(password)}` : "");
   }
 
-  get href(): string {
+  public get href(): string {
     const auth = this.encodedAuth;
     const originWithAuth =
       (this.protocol ? `${this.protocol}//` : "") +
@@ -107,7 +110,7 @@ export class $URL implements URL {
       : this.fullpath;
   }
 
-  append(url: $URL): void {
+  public append(url: $URL): void {
     if (url.hasProtocol) {
       throw new Error("Cannot append a URL with protocol");
     }
@@ -123,17 +126,20 @@ export class $URL implements URL {
     }
   }
 
-  toJSON(): string {
+  public toJSON(): string {
     return this.href;
   }
 
-  toString(): string {
+  public toString(): string {
     return this.href;
   }
 }
 
 /**
  * @deprecated use native URL with `new URL(input)` or `parseURL(input)`
+ *
+ * @param input - The URL string to parse.
+ * @returns A new `$URL` instance wrapping the parsed URL.
  */
 export function createURL(input: string): $URL {
   return new $URL(input);

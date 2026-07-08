@@ -6,29 +6,34 @@ describe("$URL", () => {
     const inputURL = "https://john:doe@example.com:1080/path?query=value&v=1&v=2#hash";
     const url = new $URL(inputURL);
 
-    expect(url.href).toEqual(inputURL);
-    expect(url.toString()).toEqual(url.href);
-    expect(url.toJSON()).toEqual(url.href);
+    expect(url.href).toStrictEqual(inputURL);
+    expect(url.toString()).toStrictEqual(url.href);
+    expect(url.toJSON()).toStrictEqual(url.href);
 
-    expect(url.searchParams.toString()).toEqual("query=value&v=1&v=2");
+    expect(url.searchParams.toString()).toBe("query=value&v=1&v=2");
     expect(url.query).toMatchObject({ query: "value", v: ["1", "2"] });
+  });
+
+  it("getters — shape", () => {
+    const inputURL = "https://john:doe@example.com:1080/path?query=value&v=1&v=2#hash";
+    const url = new $URL(inputURL);
 
     expect(url).toMatchObject({
-      protocol: "https:",
-      host: "example.com:1080",
       auth: "john:doe",
-      pathname: "/path",
-      hash: "#hash",
-      hostname: "example.com",
-      port: "1080",
-      username: "john",
-      password: "doe",
-      hasProtocol: 6,
-      isAbsolute: true,
-      search: "?query=value&v=1&v=2",
-      origin: "https://example.com:1080",
-      fullpath: "/path?query=value&v=1&v=2#hash",
       encodedAuth: "john:doe",
+      fullpath: "/path?query=value&v=1&v=2#hash",
+      hasProtocol: 6,
+      hash: "#hash",
+      host: "example.com:1080",
+      hostname: "example.com",
+      isAbsolute: true,
+      origin: "https://example.com:1080",
+      password: "doe",
+      pathname: "/path",
+      port: "1080",
+      protocol: "https:",
+      search: "?query=value&v=1&v=2",
+      username: "john",
     });
   });
 
@@ -38,14 +43,16 @@ describe("$URL", () => {
 
     url.append(path);
 
-    expect(url.toString()).toEqual(
+    expect(url.toString()).toBe(
       "https://john:doe@example.com:1080/path/newpath?query=value&newquery=newvalue#newhash",
     );
   });
 
   it("throws error if appending with another url with protocol", () => {
     const url = new $URL("https://example.com/path");
-    expect(() => url.append(url)).toThrow("Cannot append a URL with protocol");
+    expect(() => {
+      url.append(url);
+    }).toThrow("Cannot append a URL with protocol");
   });
 
   describe("constructor errors", () => {
@@ -66,7 +73,7 @@ describe("$URL", () => {
 
     it.each(tests)("$input throw", (t) => {
       // @ts-expect-error - `tests` intentionally holds non-string inputs (null,
-      // number, plain object) to verify the constructor's runtime type-check.
+      // Number, plain object) to verify the constructor's runtime type-check.
       expect(() => new $URL(t.input)).toThrow(new TypeError(t.out));
     });
   });
@@ -78,7 +85,7 @@ describe("$URL", () => {
     expect(u.password).toBe("pa:ss");
     expect(u.encodedAuth).toBe("user:pa%3Ass");
     // Serialization percent-encodes the colon in the password — this is expected and
-    // matches WHATWG (`new URL("http://user:pa:ss@example.com").href` === same).
+    // Matches WHATWG (`new URL("http://user:pa:ss@example.com").href` === same).
     expect(u.href).toBe("http://user:pa%3Ass@example.com/path");
   });
 
@@ -163,7 +170,7 @@ describe("$URL — public-field mutation", () => {
   it("query mutation via property-set is reflected in href", () => {
     const url = new $URL("https://example.com/x?a=1");
     // @ts-expect-error - test probes runtime behavior of assigning a new key
-    // to url.query; the declared type does not expose an index signature.
+    // To url.query; the declared type does not expose an index signature.
     url.query.b = "2";
     expect(url.href).toBe("https://example.com/x?a=1&b=2");
     expect(url.search).toBe("?a=1&b=2");
@@ -195,18 +202,14 @@ describe("$URL — getter-only surface", () => {
     "isAbsolute",
   ] as const;
 
-  for (const prop of getterOnlyProps) {
-    it(`${prop} is getter-only`, () => {
-      const desc =
-        Object.getOwnPropertyDescriptor($URL.prototype, prop) ??
-        Object.getOwnPropertyDescriptor(new $URL("https://a.com"), prop);
-      expect(desc).toBeDefined();
-      // eslint-disable-next-line typescript/unbound-method
-      expect(desc?.set).toBeUndefined();
-      // eslint-disable-next-line typescript/unbound-method
-      expect(typeof desc?.get).toBe("function");
-    });
-  }
+  it.each(getterOnlyProps)("%s is getter-only (prototype descriptor)", (prop) => {
+    const desc = Object.getOwnPropertyDescriptor($URL.prototype, prop);
+    expect(desc).toBeDefined();
+    // eslint-disable-next-line typescript/unbound-method
+    expect(desc?.set).toBeUndefined();
+    // eslint-disable-next-line typescript/unbound-method
+    expect(desc?.get).toBeTypeOf("function");
+  });
 });
 
 describe("createURL parity", () => {
@@ -217,27 +220,25 @@ describe("createURL parity", () => {
     "https://user:pass@example.com:8080/a?b=1#c",
   ];
 
-  for (const input of parityInputs) {
-    it(`createURL(${JSON.stringify(input)}).href === new $URL(${JSON.stringify(input)}).href`, () => {
-      const via = createURL(input);
-      const direct = new $URL(input);
-      expect(via.href).toBe(direct.href);
-      expect(via).toMatchObject({
-        protocol: direct.protocol,
-        host: direct.host,
-        pathname: direct.pathname,
-        hash: direct.hash,
-      });
+  it.each(parityInputs)("createURL(%s).href === new $URL(%s).href", (input) => {
+    const via = createURL(input);
+    const direct = new $URL(input);
+    expect(via.href).toBe(direct.href);
+    expect(via).toMatchObject({
+      hash: direct.hash,
+      host: direct.host,
+      pathname: direct.pathname,
+      protocol: direct.protocol,
     });
-  }
+  });
 
   it("createURL for opaque scheme: href equality only", () => {
-    // mailto: is an opaque scheme — just verify href round-trips, no deep struct assert.
+    // Mailto: is an opaque scheme — just verify href round-trips, no deep struct assert.
     const input = "mailto:a@b.com";
     expect(createURL(input).href).toBe(new $URL(input).href);
   });
 
-  // protocol-relative: probe showed createURL("//example.com/path").href === "/path"
+  // Protocol-relative: probe showed createURL("//example.com/path").href === "/path"
   // (the "//" authority is dropped because $URL has no setter for it; characterization only).
   it("createURL protocol-relative: characterize current behavior", () => {
     const input = "//example.com/path";
@@ -260,8 +261,8 @@ describe("$URL — edge case constructors", () => {
     expect(url.host).toBe("");
     expect(url.pathname).toBe("/only-path");
     expect(url.hasProtocol).toBe(0);
-    // isAbsolute is truthy because pathname starts with "/"
-    expect(url.isAbsolute).toBeTruthy();
+    // IsAbsolute is truthy because pathname starts with "/"
+    expect(url.isAbsolute).toBe(true);
   });
 
   it("origin-only input (no path)", () => {

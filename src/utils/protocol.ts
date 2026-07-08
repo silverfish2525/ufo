@@ -1,13 +1,13 @@
 import type { IsScriptProtocol, IsSpecialScheme, Refine, WithProtocol } from "../_types";
 
-const PROTOCOL_STRICT_REGEX = /^[\s\0]*[A-Z][A-Z0-9+.-]+:[/\\]{1,2}/i;
-const PROTOCOL_REGEX = /^[\s\0]*[A-Z][\s\w\0+.-]+:(?:[/\\]{2})?/i;
+const PROTOCOL_STRICT_REGEX = /^[\s\0]*[A-Z][A-Z0-9+.-]+:[/\\]{1,2}/iu;
+const PROTOCOL_REGEX = /^[\s\0]*[A-Z][\s\w\0+.-]+:(?:[/\\]{2})?/iu;
 // Issue unjs/ufo#237: distinguishes bare `hostname:port` from opaque URI schemes.
 const HOST_PORT_RE =
-  /^(?:localhost|[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+):\d+(?:[/?#]|$)/i;
-const PROTOCOL_RELATIVE_REGEX = /^(?:[/\\]\s*){2,}[^/\\]/;
+  /^(?:localhost|[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+):\d+(?:[/?#]|$)/iu;
+const PROTOCOL_RELATIVE_REGEX = /^(?:[/\\]\s*){2,}[^/\\]/u;
 
-const SCHEME_STRIP_RE = /[\t\n\r]/g;
+const SCHEME_STRIP_RE = /[\t\n\r]/gu;
 
 function normalizeSchemeForProtocolChecks(input: string): string {
   return input.replace(SCHEME_STRIP_RE, "");
@@ -64,19 +64,21 @@ export function hasProtocol(inputString: string, acceptRelative: boolean): boole
  * hasProtocol('data:text/plain', { strict: true }); // false
  * ```
  *
+ * @param inputString - The URL string to check for a protocol.
+ * @param [opts] - Options or a boolean shorthand for `acceptRelative`.
+ * @returns `true` if the input has a protocol (or protocol-relative URL when `acceptRelative` is set).
  * @group utils
  */
 export function hasProtocol(inputString: string, opts: boolean | HasProtocolOptions = {}): boolean {
-  if (typeof opts === "boolean") {
-    opts = { acceptRelative: opts };
-  }
+  const resolvedOpts: HasProtocolOptions =
+    typeof opts === "boolean" ? { acceptRelative: opts } : opts;
   const normalized = normalizeSchemeForProtocolChecks(inputString);
-  if (opts.strict) {
+  if (resolvedOpts.strict === true) {
     return PROTOCOL_STRICT_REGEX.test(normalized);
   }
   return (
     PROTOCOL_REGEX.test(normalized) ||
-    (opts.acceptRelative ? PROTOCOL_RELATIVE_REGEX.test(normalized) : false)
+    (resolvedOpts.acceptRelative === true ? PROTOCOL_RELATIVE_REGEX.test(normalized) : false)
   );
 }
 
@@ -106,8 +108,8 @@ export function isScriptProtocol(protocol?: string): boolean {
     return false;
   }
   const normalized = normalizeSchemeForProtocolChecks(protocol)
-    .replace(/^[\s\0]+/, "")
-    .replace(/:$/, "")
+    .replace(/^[\s\0]+/u, "")
+    .replace(/:$/u, "")
     .toLowerCase();
   return SCRIPT_SCHEMES.has(normalized);
 }
@@ -128,14 +130,12 @@ export function withProtocol<const S extends string, const P extends string>(
 ): Refine<S, WithProtocol<S, P>>;
 export function withProtocol(input: string, protocol: string): string;
 export function withProtocol(input: string, protocol: string): string {
-  // unjs/ufo#237: `localhost:9000` has no scheme; strip only real scheme prefixes.
+  // Unjs/ufo#237: `localhost:9000` has no scheme; strip only real scheme prefixes.
   if (HOST_PORT_RE.test(input)) {
     return protocol + input;
   }
-  let match = input.match(PROTOCOL_REGEX);
-  if (!match) {
-    match = input.match(/^\/{2,}/);
-  }
+  let match = PROTOCOL_REGEX.exec(input);
+  match ??= /^\/{2,}/u.exec(input);
   if (!match) {
     return protocol + input;
   }
@@ -216,5 +216,5 @@ export function isSpecialScheme(scheme?: string): boolean {
   if (scheme === undefined || scheme === "") {
     return false;
   }
-  return SPECIAL_SCHEMES.has(scheme.toLowerCase().replace(/:$/, ""));
+  return SPECIAL_SCHEMES.has(scheme.toLowerCase().replace(/:$/u, ""));
 }

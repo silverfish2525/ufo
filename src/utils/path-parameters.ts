@@ -21,7 +21,7 @@ export interface WithPathParametersOptions {
   onMissing?: "leave" | "throw" | "empty";
 }
 
-const DEFAULT_INTERPOLATE = /\{([\s\S]+?)\}/g;
+const DEFAULT_INTERPOLATE = /\{(?<name>[\s\S]+?)\}/gu;
 
 /**
  * Substitutes path-parameter placeholders in a URL template with values from
@@ -50,6 +50,10 @@ const DEFAULT_INTERPOLATE = /\{([\s\S]+?)\}/g;
  *
  * Closes upstream unjs/ufo#243.
  *
+ * @param template - The URL template string with placeholders.
+ * @param parameters - An object mapping placeholder names to values.
+ * @param [options] - Options controlling placeholder syntax and missing-key behaviour.
+ * @returns The URL string with all placeholders substituted.
  * @group utils
  */
 export function withPathParameters(
@@ -79,7 +83,6 @@ export function withPathParameters(
         case "empty": {
           return "";
         }
-        case "leave":
         default: {
           return match;
         }
