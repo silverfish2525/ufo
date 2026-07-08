@@ -106,7 +106,6 @@ export default defineConfig({
     attw: { level: "error", profile: "esm-only" },
     exports: true,
     failOnWarn: "ci-only",
-    format: ["esm"],
     platform: "neutral",
     publint: { strict: true },
     target: "esnext",

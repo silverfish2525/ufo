@@ -60,27 +60,13 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
-    "@oxfmt/binding-darwin-arm64": "catalog:",
-    "@oxlint/binding-darwin-arm64": "catalog:",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "automd": "catalog:",
     "changelogen": "catalog:",
     "publint": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:",
-    "vite-plus": "catalog:",
-    "vitest": "catalog:"
-  },
-  "optionalDependencies": {
-    "@oxlint/binding-android-arm64": "catalog:",
-    "@oxlint/binding-darwin-x64": "catalog:",
-    "@oxlint/binding-linux-arm64-gnu": "catalog:",
-    "@oxlint/binding-linux-arm64-musl": "catalog:",
-    "@oxlint/binding-linux-x64-gnu": "catalog:",
-    "@oxlint/binding-linux-x64-musl": "catalog:",
-    "@oxlint/binding-win32-arm64-msvc": "catalog:",
-    "@oxlint/binding-win32-x64-msvc": "catalog:"
+    "vite-plus": "catalog:"
   },
   "devEngines": {
     "packageManager": {
@@ -90,7 +76,7 @@
     },
     "runtime": {
       "name": "node",
-      "version": "^24.0.0",
+      "version": "^26.4.0",
       "onFail": "download"
     }
   },
