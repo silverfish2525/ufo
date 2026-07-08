@@ -160,20 +160,82 @@ export default defineConfig({
       "prefer-const": "error",
       "no-var": "error",
       eqeqeq: ["error", "smart"],
+
+      // ---------------------------------------------------------------
+      // Rules disabled after enabling all oxlint categories.
+      // Every entry below is a deliberate exemption; nothing here masks
+      // a real bug in the URL parser.
+      // ---------------------------------------------------------------
+
+      // Restriction: nonsensical for a library that intentionally exports many
+      // named symbols from src/index.ts and has no default export.
+      "import/no-named-export": "off",
+      "import/group-exports": "off",
+      "import/exports-last": "off",
+      "import/no-relative-parent-imports": "off",
+      "import/no-duplicate-imports": "off", // duplicates typescript/no-duplicate-imports
+
+      // Restriction: opinionated style rules that fight readable code.
+      "eslint/id-length": "off", // t, c, s, i, k are fine in tight scopes
+      "eslint/no-magic-numbers": "off", // URL parser deals in char codes, ports, etc.
+      "eslint/no-undefined": "off", // undefined is a valid value in TS
+      "eslint/no-ternary": "off",
+      "eslint/func-style": "off",
+      "eslint/no-script-url": "off", // this IS a URL parser; javascript: is a test input
+      "eslint/sort-imports": "off",
+      "eslint/no-continue": "off",
+      "eslint/max-statements": "off",
+      "eslint/max-lines-per-function": "off",
+      "eslint/max-lines": "off",
+
+      // Restriction: legit modern JS/TS features.
+      "oxc/no-optional-chaining": "off",
+      "oxc/no-rest-spread-properties": "off",
+
+      // Unicorn: null is a legitimate WHATWG-URL value (host/port/etc.).
+      "unicorn/no-null": "off",
+
+      // Vitest restriction rules that don't match this suite's conventions.
+      "vitest/prefer-expect-assertions": "off",
+      "vitest/require-test-timeout": "off",
+      "vitest/prefer-describe-function-title": "off",
+      "vitest/prefer-to-be-truthy": "off", // we use toBe(true)
+      "vitest/prefer-to-be-falsy": "off", // we use toBe(false)
+      "vitest/prefer-importing-vitest-globals": "off", // globals: true in test config
     },
     overrides: [
+      {
+        files: ["tests/**/*.ts"],
+        rules: {
+          // Test-data literals are inherently readonly-in-spirit; forcing
+          // `readonly` annotations on every test fn parameter is noise.
+          "typescript/prefer-readonly-parameter-types": "off",
+        },
+      },
+      {
+        files: ["**/*.test-d.ts"],
+        rules: {
+          // expectTypeOf(...).toEqualTypeOf<...>() is idiomatic and returns void.
+          "typescript/no-confusing-void-expression": "off",
+        },
+      },
       {
         files: ["tests/wpt-urltestdata.test.ts"],
         rules: {
           "vitest/no-disabled-tests": "off",
           "vitest/no-conditional-tests": "off",
           "vitest/no-standalone-expect": "off",
+          "vitest/warn-todo": "off", // .todo tracks known WHATWG divergences
+          "vitest/prefer-each": "off", // conditional it.fails/it.todo per case
         },
       },
       {
         files: ["scripts/**/*.ts"],
         rules: {
           "no-console": "off",
+          "import/no-nodejs-modules": "off", // Node scripts, obviously
+          "unicorn/no-process-exit": "off",
+          "vitest/require-hook": "off", // not a test file
         },
       },
     ],
