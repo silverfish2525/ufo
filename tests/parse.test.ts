@@ -352,7 +352,6 @@ describe("parseURL", () => {
       "trailing@",
     ];
     const tails = ["/p", "/p?q=1", "/p#f", ""];
-    // oxlint-disable vitest/prefer-each -- triple-nested loop with conditional break; not expressible as it.each
     for (const h of hosts) {
       for (const u of userinfos) {
         for (const t of tails) {

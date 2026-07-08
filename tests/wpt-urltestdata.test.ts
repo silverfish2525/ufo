@@ -130,7 +130,6 @@ const EXPECTED_FAILURES: ReadonlySet<string> = new Set<string>([
 ]);
 
 describe("wPT urltestdata.json (special-scheme subset)", () => {
-  // oxlint-disable-next-line vitest/prefer-each -- conditional it.fails/it.todo per case; not expressible as it.each
   for (const c of subset) {
     const label = `${c.input}${c.base !== undefined && c.base !== "" ? ` (base: ${String(c.base)})` : ""}`;
 
