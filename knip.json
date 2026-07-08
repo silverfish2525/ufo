@@ -1,4 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "tags": ["-lintignore"]
+  "entry": ["src/index.ts!", "scripts/*.ts"],
+  "project": ["src/**/*.ts!", "scripts/**/*.ts", "tests/**/*.ts"],
+  "ignoreDependencies": ["@arethetypeswrong/core", "publint"],
+  "rules": {
+    "cycles": "error"
+  }
 }

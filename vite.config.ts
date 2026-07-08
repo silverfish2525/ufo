@@ -134,11 +134,39 @@ export default defineConfig({
       },
       dev: { cache: false, command: "vp test" },
       format: { command: "vp fmt --write" },
+      knip: {
+        command:
+          "knip --cache --treat-config-hints-as-errors --reporter symbols --reporter github-actions",
+        input: [
+          "src/**",
+          "tests/**",
+          "scripts/**",
+          "knip.json",
+          "package.json",
+          "vite.config.ts",
+          "pnpm-workspace.yaml",
+        ],
+        output: [],
+      },
+      "knip:fix": { cache: false, command: "knip --fix --allow-remove-files --no-exit-code" },
+      "knip:production": {
+        command:
+          "knip --strict --cache --treat-config-hints-as-errors --reporter symbols --reporter github-actions",
+        input: [
+          "src/**",
+          "scripts/**",
+          "knip.json",
+          "package.json",
+          "vite.config.ts",
+          "pnpm-workspace.yaml",
+        ],
+        output: [],
+      },
       lint: { command: "vp lint" },
       "lint:fix": { command: "vp lint --fix" },
       test: {
         command: "vp test run --typecheck",
-        dependsOn: ["check:no-deps", "check"],
+        dependsOn: ["check:no-deps", "check", "knip", "knip:production"],
         output: [{ auto: true }, "!coverage/**"],
       },
       "test:coverage": { command: "vp test run --coverage" },
@@ -154,7 +182,6 @@ export default defineConfig({
     coverage: {
       exclude: ["src/_types.ts", "src/punycode.ts", "src/index.ts"],
       include: ["src/**/*.ts"],
-      provider: "v8",
       reporter: ["text", "html", "lcov"],
       thresholds: {
         branches: 85,

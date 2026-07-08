@@ -23,8 +23,10 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: node_modules/.vite
-          key: ${{ runner.os }}-publish-vite-${{ hashFiles('pnpm-lock.yaml', 'vite.config.ts') }}
+          path: |
+            node_modules/.vite
+            node_modules/.cache/knip
+          key: ${{ runner.os }}-publish-vite-${{ hashFiles('pnpm-lock.yaml', 'vite.config.ts', 'knip.json') }}
           restore-keys: |
             ${{ runner.os }}-publish-vite-
 

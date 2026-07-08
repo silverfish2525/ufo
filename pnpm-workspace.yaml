@@ -11,6 +11,7 @@ catalog:
   "@types/node": ^26.1.0
   automd: ^0.4.3
   changelogen: ^0.6.2
+  knip: ^6.25.0
 
 allowBuilds:
   "@parcel/watcher": true
