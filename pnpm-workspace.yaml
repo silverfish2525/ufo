@@ -24,7 +24,6 @@ catalog:
   "@oxlint/binding-linux-arm64-musl": 1.72.0
   "@oxlint/binding-linux-x64-gnu": 1.72.0
   "@oxlint/binding-linux-x64-musl": 1.72.0
-  "@oxlint/binding-wasm32-wasi": 1.72.0
   "@oxlint/binding-win32-arm64-msvc": 1.72.0
   "@oxlint/binding-win32-x64-msvc": 1.72.0
 
@@ -84,7 +83,6 @@ minimumReleaseAgeExclude:
   - "@oxlint/binding-linux-x64-musl@1.72.0"
   - "@oxlint/binding-win32-arm64-msvc@1.72.0"
   - "@oxlint/binding-win32-x64-msvc@1.72.0"
-  - "@oxlint/binding-wasm32-wasi@1.72.0"
   - "@oxlint/plugins@1.68.0"
   - "oxlint@1.72.0"
   - "oxlint-tsgolint@0.24.0"

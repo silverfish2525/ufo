@@ -79,14 +79,13 @@
     "@oxlint/binding-linux-arm64-musl": "catalog:",
     "@oxlint/binding-linux-x64-gnu": "catalog:",
     "@oxlint/binding-linux-x64-musl": "catalog:",
-    "@oxlint/binding-wasm32-wasi": "catalog:",
     "@oxlint/binding-win32-arm64-msvc": "catalog:",
     "@oxlint/binding-win32-x64-msvc": "catalog:"
   },
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.0.0",
+      "version": "11.10.0",
       "onFail": "download"
     },
     "runtime": {

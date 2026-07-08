@@ -1,3 +1,4 @@
+// oxlint-disable vitest/prefer-strict-equal -- parseQuery returns a null-prototype object; content-only .toEqual is intentional, null-proto is asserted separately
 import { describe, expect, it } from "vite-plus/test";
 import {
   encodeQueryItem,
@@ -118,47 +119,47 @@ describe("getQuery", () => {
 
 describe("parseQuery", () => {
   it("returns an empty object for an empty string", () => {
-    expect(parseQuery("")).toStrictEqual({});
+    expect(parseQuery("")).toEqual({});
   });
 
   it("returns an empty object for a bare '?'", () => {
-    expect(parseQuery("?")).toStrictEqual({});
+    expect(parseQuery("?")).toEqual({});
   });
 
   it("parses a key with no '=' as empty-string value", () => {
-    expect(parseQuery("a")).toStrictEqual({ a: "" });
+    expect(parseQuery("a")).toEqual({ a: "" });
   });
 
   it("parses 'a=' as empty-string value", () => {
-    expect(parseQuery("a=")).toStrictEqual({ a: "" });
+    expect(parseQuery("a=")).toEqual({ a: "" });
   });
 
   it("parses two empty-valued keys", () => {
-    expect(parseQuery("a=&b=")).toStrictEqual({ a: "", b: "" });
+    expect(parseQuery("a=&b=")).toEqual({ a: "", b: "" });
   });
 
   it("collects repeated keys into an array of strings", () => {
-    expect(parseQuery("a=1&a=2")).toStrictEqual({ a: ["1", "2"] });
+    expect(parseQuery("a=1&a=2")).toEqual({ a: ["1", "2"] });
   });
 
   it("decodes percent-encoded characters", () => {
-    expect(parseQuery("a=hello%20world")).toStrictEqual({ a: "hello world" });
+    expect(parseQuery("a=hello%20world")).toEqual({ a: "hello world" });
   });
 
   it("decodes '+' as space (application/x-www-form-urlencoded behavior)", () => {
-    expect(parseQuery("a=hello+world")).toStrictEqual({ a: "hello world" });
+    expect(parseQuery("a=hello+world")).toEqual({ a: "hello world" });
   });
 
   // Upstream PR #331 + issue #355: preserve empty-key parameters (`=value`).
   it("preserves empty-key parameters (=value → { '': 'value' })", () => {
-    expect(parseQuery("=b")).toStrictEqual({ "": "b" });
-    expect(parseQuery("a=1&=b")).toStrictEqual({ "": "b", a: "1" });
-    expect(parseQuery("==")).toStrictEqual({ "": "=" });
+    expect(parseQuery("=b")).toEqual({ "": "b" });
+    expect(parseQuery("a=1&=b")).toEqual({ "": "b", a: "1" });
+    expect(parseQuery("==")).toEqual({ "": "=" });
   });
 
   // Upstream PR #331: value with `=` is preserved after the first `=`.
   it("treats subsequent `=` chars as value (URLSearchParams parity)", () => {
-    expect(parseQuery("a=b=c=d")).toStrictEqual({ a: "b=c=d" });
+    expect(parseQuery("a=b=c=d")).toEqual({ a: "b=c=d" });
   });
 
   // Upstream PR #289: prototype pollution guard.
