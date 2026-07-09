@@ -3,12 +3,12 @@ shellEmulator: true
 trustPolicy: no-downgrade
 
 catalog:
-  vite-plus: 0.2.3
-  "@vitest/coverage-v8": 4.1.9
+  vite-plus: 0.2.4
+  "@vitest/coverage-v8": 4.1.10
   "@arethetypeswrong/core": ^0.18.4
   publint: ^0.3.21
   typescript: ^6.0.3
-  "@types/node": ^26.1.0
+  "@types/node": ^26.1.1
   automd: ^0.4.3
   changelogen: ^0.6.2
   knip: ^6.25.0
