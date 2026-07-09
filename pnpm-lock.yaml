@@ -215,10 +215,10 @@ catalogs:
       specifier: 4.1.10
       version: 4.1.10
     automd:
-      specifier: ^0.4.3
+      specifier: 0.4.3
       version: 0.4.3
     changelogen:
-      specifier: ^0.6.2
+      specifier: 0.6.2
       version: 0.6.2
     knip:
       specifier: ^6.25.0
