@@ -21,7 +21,63 @@ export interface WithPathParametersOptions {
   onMissing?: "leave" | "throw" | "empty";
 }
 
-const DEFAULT_INTERPOLATE = /\{(?<name>[\s\S]+?)\}/gu;
+// Returns the substitution string, or `undefined` to signal "keep the original match".
+function resolveKey(
+  key: string,
+  parameters: Record<string, string | number>,
+  onMissing: "leave" | "throw" | "empty",
+): string | undefined {
+  if (Object.hasOwn(parameters, key)) {
+    const raw = parameters[key];
+    return raw === undefined ? undefined : encodeParam(typeof raw === "number" ? String(raw) : raw);
+  }
+  switch (onMissing) {
+    case "throw": {
+      throw new TypeError(`withPathParameters: missing value for placeholder "${key}".`);
+    }
+    case "empty": {
+      return "";
+    }
+    // oxlint-disable-next-line unicorn/no-useless-switch-case -- fall-through matches upstream unjs/ufo and satisfies switch-exhaustiveness-check
+    case "leave":
+    default: {
+      return undefined;
+    }
+  }
+}
+
+// Linear scanner for the default `{name}` syntax (closes CodeQL js/polynomial-redos).
+// Preserves the semantics of the old `/\{(.+?)\}/gu` regex: `{}` is not a match, and
+// Nested `{`s inside a name are permitted up to the first `}`.
+function replaceDefault(
+  template: string,
+  parameters: Record<string, string | number>,
+  onMissing: "leave" | "throw" | "empty",
+): string {
+  let result = "";
+  let i = 0;
+  const { length } = template;
+  while (i < length) {
+    const open = template.indexOf("{", i);
+    if (open === -1) {
+      result += template.slice(i);
+      break;
+    }
+    // `+ 2` mirrors the ≥1-char-between-braces rule of the old `+?` regex.
+    const close = template.indexOf("}", open + 2);
+    if (close === -1) {
+      result += template.slice(i);
+      break;
+    }
+    result += template.slice(i, open);
+    const match = template.slice(open, close + 1);
+    const key = template.slice(open + 1, close).trim();
+    const sub = resolveKey(key, parameters, onMissing);
+    result += sub ?? match;
+    i = close + 1;
+  }
+  return result;
+}
 
 /**
  * Substitutes path-parameter placeholders in a URL template with values from
@@ -61,7 +117,10 @@ export function withPathParameters(
   parameters: Record<string, string | number>,
   options: WithPathParametersOptions = {},
 ): string {
-  const { interpolate = DEFAULT_INTERPOLATE, onMissing = "leave" } = options;
+  const { interpolate, onMissing = "leave" } = options;
+  if (interpolate === undefined) {
+    return replaceDefault(template, parameters, onMissing);
+  }
   if (!interpolate.flags.includes("g")) {
     throw new TypeError(
       `withPathParameters: options.interpolate must have the /g flag ` +
@@ -74,27 +133,7 @@ export function withPathParameters(
     if (typeof name !== "string") {
       return match;
     }
-    const key = name.trim();
-    if (!Object.hasOwn(parameters, key)) {
-      switch (onMissing) {
-        case "throw": {
-          throw new TypeError(`withPathParameters: missing value for placeholder "${key}".`);
-        }
-        case "empty": {
-          return "";
-        }
-        // oxlint-disable-next-line unicorn/no-useless-switch-case -- fall-through matches upstream unjs/ufo and satisfies switch-exhaustiveness-check
-        case "leave":
-        default: {
-          return match;
-        }
-      }
-    }
-    const raw = parameters[key];
-    if (raw === undefined) {
-      // Should be unreachable given the hasOwn check above, but narrows for TS.
-      return match;
-    }
-    return encodeParam(typeof raw === "number" ? String(raw) : raw);
+    const sub = resolveKey(name.trim(), parameters, onMissing);
+    return sub ?? match;
   });
 }

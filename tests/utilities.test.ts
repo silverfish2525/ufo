@@ -690,4 +690,28 @@ describe("withPathParameters (issue #243)", () => {
     Object.defineProperty(parameters, "v", { enumerable: true, value: undefined });
     expect(withPathParameters("/x/{v}", parameters)).toBe("/x/{v}");
   });
+
+  it("linear time on adversarial unclosed-brace input (regression: CodeQL js/polynomial-redos)", () => {
+    const template = `${"{".repeat(100_000)}a`;
+    expect(withPathParameters(template, {})).toBe(template);
+  });
+
+  it("linear time on adversarial interleaved-brace input (regression: CodeQL js/polynomial-redos)", () => {
+    const template = "{a".repeat(100_000);
+    expect(withPathParameters(template, {})).toBe(template);
+  });
+
+  it("empty placeholder `{}` is not a match (regex `+?` parity)", () => {
+    expect(withPathParameters("/x/{}/y", {})).toBe("/x/{}/y");
+    expect(withPathParameters("/x/{}/y", {}, { onMissing: "throw" })).toBe("/x/{}/y");
+  });
+
+  it("nested `{` inside a placeholder name is kept up to the first `}`", () => {
+    expect(withPathParameters("/x/{a{b}", { "a{b": "y" })).toBe("/x/y");
+  });
+
+  it("unclosed `{` leaves the remainder of the template verbatim", () => {
+    expect(withPathParameters("/x/{unclosed", {})).toBe("/x/{unclosed");
+    expect(withPathParameters("/x/{a}/{unclosed", { a: "1" })).toBe("/x/1/{unclosed");
+  });
 });

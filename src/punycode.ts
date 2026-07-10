@@ -36,7 +36,7 @@ export function toASCII(o) {
         o[e] = t(n[e]);
       }
       return o;
-    })((n = n.replace(t, ".")).split("."), o).join(".");
+    })(n.replace(t, ".").split("."), o).join(".");
     return r + s;
   })(o, (t) => {
     return n.test(t)
