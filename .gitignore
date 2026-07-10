@@ -1,4 +1,3 @@
-.vscode
 .idea
 node_modules
 *.log
@@ -11,7 +10,6 @@ types
 .eslintcache
 .agents/
 .pi/
-
 .vite-inspect
 .vite-cache
 .vp/
