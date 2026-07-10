@@ -4,7 +4,7 @@
     "target": "ESNext",
     "lib": ["ESNext", "DOM"],
     "moduleDetection": "force",
-    "module": "preserve",
+    "module": "esnext",
     "types": ["node"],
     "strict": true,
     "allowUnreachableCode": false,
