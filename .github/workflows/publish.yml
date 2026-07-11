@@ -49,8 +49,10 @@ jobs:
           sfw: true
           registry-url: https://registry.npmjs.org
 
-      - name: Enable Corepack (provides pnpm@11.10.0 pinned by packageManager)
-        run: corepack enable
+      - name: Activate Corepack pnpm@11.10.0 (matches package.json packageManager pin)
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.10.0 --activate
 
       - run: pnpm publish --access public --provenance --no-git-checks
         env:
