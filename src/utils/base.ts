@@ -16,6 +16,11 @@ function isAtBaseBoundary(input: string, baseLen: number): boolean {
   return char !== undefined && URL_BOUNDARY_CHARS.has(char);
 }
 
+export function withBase<const Input extends string, const Base extends string>(
+  input: Input,
+  base: Base,
+): WithBaseResult<Input, Base>;
+export function withBase(input: string, base: string, opts?: JoinURLOptions): string;
 /**
  * Ensures the URL or pathname starts with base.
  *
@@ -40,11 +45,6 @@ function isAtBaseBoundary(input: string, baseLen: number): boolean {
  * @returns The URL with the base prepended (or unchanged if already present).
  * @group utils
  */
-export function withBase<const Input extends string, const Base extends string>(
-  input: Input,
-  base: Base,
-): WithBaseResult<Input, Base>;
-export function withBase(input: string, base: string, opts?: JoinURLOptions): string;
 export function withBase(input: string, base: string, opts?: JoinURLOptions): string {
   if (isEmptyURL(base) || hasProtocol(input)) {
     return normalizeProtocolRelative(input, base, opts);
@@ -58,6 +58,11 @@ export function withBase(input: string, base: string, opts?: JoinURLOptions): st
   return joinURL(baseNorm, normalizedInput);
 }
 
+export function withoutBase<const Input extends string, const Base extends string>(
+  input: Input,
+  base: Base,
+): WithoutBaseResult<Input, Base>;
+export function withoutBase(input: string, base: string): string;
 /**
  * Removes the base from the URL or pathname.
  *
@@ -74,11 +79,6 @@ export function withBase(input: string, base: string, opts?: JoinURLOptions): st
  * @returns The URL with the base removed (or unchanged if not present).
  * @group utils
  */
-export function withoutBase<const Input extends string, const Base extends string>(
-  input: Input,
-  base: Base,
-): WithoutBaseResult<Input, Base>;
-export function withoutBase(input: string, base: string): string;
 export function withoutBase(input: string, base: string): string {
   if (isEmptyURL(base)) {
     return input;

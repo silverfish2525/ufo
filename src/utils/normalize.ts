@@ -6,6 +6,8 @@ import { modifyParsedURL } from "./_modify";
 import { isNonEmptyURL } from "./predicates";
 import { withTrailingSlash, withoutLeadingSlash } from "./slash";
 
+export function cleanDoubleSlashes<const S extends string>(input: S): CleanDoubleSlashes<S>;
+export function cleanDoubleSlashes(input?: string): string;
 /**
  * Removes double slashes from the URL.
  *
@@ -20,8 +22,6 @@ import { withTrailingSlash, withoutLeadingSlash } from "./slash";
  *
  * @group utils
  */
-export function cleanDoubleSlashes<const S extends string>(input: S): CleanDoubleSlashes<S>;
-export function cleanDoubleSlashes(input?: string): string;
 export function cleanDoubleSlashes(input = ""): string {
   const qIdx = input.search(/[?#]/u);
   const path = qIdx === -1 ? input : input.slice(0, qIdx);
@@ -33,6 +33,8 @@ export function cleanDoubleSlashes(input = ""): string {
   return cleaned + rest;
 }
 
+export function normalizeURL<const S extends string>(input: S): Refine<S, NormalizeURL<S>>;
+export function normalizeURL(input: string): string;
 /**
  * Normalizes the input URL:
  *
@@ -52,8 +54,6 @@ export function cleanDoubleSlashes(input = ""): string {
  *
  * @group utils
  */
-export function normalizeURL<const S extends string>(input: S): Refine<S, NormalizeURL<S>>;
-export function normalizeURL(input: string): string;
 export function normalizeURL(input: string): string {
   return modifyParsedURL(input, (parsed) => {
     parsed.pathname = encodePath(decodePath(parsed.pathname));
@@ -63,6 +63,11 @@ export function normalizeURL(input: string): string {
   });
 }
 
+export function resolveURL<const Base extends string, const Inputs extends readonly string[]>(
+  base: Base,
+  ...inputs: Inputs
+): Refine<Base, ResolveURL<Base, Inputs>>;
+export function resolveURL(base?: string, ...inputs: string[]): string;
 /**
  * Resolves multiple URL segments into a single URL.
  *
@@ -75,11 +80,6 @@ export function normalizeURL(input: string): string {
  *
  * @group utils
  */
-export function resolveURL<const Base extends string, const Inputs extends readonly string[]>(
-  base: Base,
-  ...inputs: Inputs
-): Refine<Base, ResolveURL<Base, Inputs>>;
-export function resolveURL(base?: string, ...inputs: string[]): string;
 export function resolveURL(base = "", ...inputs: string[]): string {
   if (typeof base !== "string") {
     throw new TypeError(

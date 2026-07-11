@@ -9,6 +9,8 @@ import type {
 import { parseURL, stringifyParsedURL } from "../parse";
 import { hasProtocol } from "./protocol";
 
+export function withoutHost<const S extends string>(input: S): Refine<S, WithoutHost<S>>;
+export function withoutHost(input: string): string;
 /**
  * Removes the host from the URL while preserving everything else.
  *
@@ -20,8 +22,6 @@ import { hasProtocol } from "./protocol";
  *
  * @group utils
  */
-export function withoutHost<const S extends string>(input: S): Refine<S, WithoutHost<S>>;
-export function withoutHost(input: string): string;
 export function withoutHost(input: string): string {
   if (
     !hasProtocol(input, { acceptRelative: true }) &&
@@ -53,6 +53,11 @@ function validatePort(port: string | number): string {
   return String(n);
 }
 
+export function withHost<const Input extends string, const NewHost extends string>(
+  input: Input,
+  host: NewHost,
+): WithHostResult<Input, NewHost>;
+export function withHost(input: string, host: string): string;
 /**
  * Sets or replaces the host authority slot, preserving `auth`, port, path,
  * search, and hash. Relative inputs (no scheme, no leading `//`) are
@@ -76,11 +81,6 @@ function validatePort(port: string | number): string {
  * @returns The URL string with the host replaced.
  * @group utils
  */
-export function withHost<const Input extends string, const NewHost extends string>(
-  input: Input,
-  host: NewHost,
-): WithHostResult<Input, NewHost>;
-export function withHost(input: string, host: string): string;
 export function withHost(input: string, host: string): string {
   if (hasNoAuthoritySlot(input)) {
     return input;
@@ -90,6 +90,11 @@ export function withHost(input: string, host: string): string {
   return stringifyParsedURL(parsed);
 }
 
+export function withPort<const Input extends string, const Port extends string | number>(
+  input: Input,
+  port: Port,
+): WithPortResult<Input, Port>;
+export function withPort(input: string, port: string | number): string;
 /**
  * Sets or replaces the port slot. Accepts `string | number` for ergonomics.
  * Passing `0`, an empty string, or a value outside the 1..65535 range throws
@@ -107,11 +112,6 @@ export function withHost(input: string, host: string): string {
  * @returns The URL string with the port set.
  * @group utils
  */
-export function withPort<const Input extends string, const Port extends string | number>(
-  input: Input,
-  port: Port,
-): WithPortResult<Input, Port>;
-export function withPort(input: string, port: string | number): string;
 export function withPort(input: string, port: string | number): string {
   const portString = validatePort(port);
   if (hasNoAuthoritySlot(input)) {
@@ -127,6 +127,8 @@ export function withPort(input: string, port: string | number): string {
   return stringifyParsedURL(parsed);
 }
 
+export function withoutPort<const Input extends string>(input: Input): WithoutPortResult<Input>;
+export function withoutPort(input: string): string;
 /**
  * Strips the port from an absolute URL's authority, leaving everything else
  * untouched. No-op on relative inputs or URLs without a port.
@@ -142,8 +144,6 @@ export function withPort(input: string, port: string | number): string {
  * @returns The URL string with the port removed.
  * @group utils
  */
-export function withoutPort<const Input extends string>(input: Input): WithoutPortResult<Input>;
-export function withoutPort(input: string): string;
 export function withoutPort(input: string): string {
   if (hasNoAuthoritySlot(input)) {
     return input;
@@ -157,6 +157,8 @@ export function withoutPort(input: string): string {
   return stringifyParsedURL(parsed);
 }
 
+export function withoutAuth<const Input extends string>(input: Input): WithoutAuthResult<Input>;
+export function withoutAuth(input: string): string;
 /**
  * Strips the userinfo (`user:pass@`) prefix from an absolute URL's
  * authority. No-op on relative inputs or URLs without userinfo.
@@ -173,8 +175,6 @@ export function withoutPort(input: string): string {
  * @returns The URL string with userinfo stripped.
  * @group utils
  */
-export function withoutAuth<const Input extends string>(input: Input): WithoutAuthResult<Input>;
-export function withoutAuth(input: string): string;
 export function withoutAuth(input: string): string {
   if (hasNoAuthoritySlot(input)) {
     return input;

@@ -46,6 +46,10 @@ export interface ParsedHost {
   port: string | undefined;
 }
 
+export function parsePath<const S extends string>(
+  input: S,
+): Refine<S, ParsePathType<S>, ParsedPath>;
+export function parsePath(input?: string): ParsedPath;
 /**
  * Splits the input string into three parts, and returns an object with those three parts.
  *
@@ -61,10 +65,6 @@ export interface ParsedHost {
  * @param [input] - The URL to parse.
  * @returns An object with three properties: `pathname`, `search`, and `hash`.
  */
-export function parsePath<const S extends string>(
-  input: S,
-): Refine<S, ParsePathType<S>, ParsedPath>;
-export function parsePath(input?: string): ParsedPath;
 export function parsePath(input = ""): ParsedPath {
   const pathMatch = /(?<pathname>[^#?]*)(?<search>\?[^#]*)?(?<hash>#.*)?/u.exec(input);
   const pathname = pathMatch?.groups?.["pathname"] ?? "";
@@ -98,6 +98,7 @@ function splitAuthorityAndPath(authorityAndPath: string): { auth: string; hostAn
 }
 
 export function parseURL<const S extends string>(input: S): Refine<S, ParseURL<S>, ParsedURL>;
+export function parseURL(input?: string, defaultProto?: string): ParsedURL;
 /**
  * Takes a URL string and returns an object with the URL's `protocol`, `auth`, `host`, `pathname`, `search`, and `hash`.
  *
@@ -120,7 +121,6 @@ export function parseURL<const S extends string>(input: S): Refine<S, ParseURL<S
  * @param defaultProto - The default protocol to use if the input has none.
  * @returns A parsed URL object.
  */
-export function parseURL(input?: string, defaultProto?: string): ParsedURL;
 export function parseURL(input = "", defaultProto?: string): ParsedURL {
   const normalizedInput = input.replaceAll(/[\t\n\r]/gu, "");
   const schemeMatch = /^[\s\0]*(?<scheme>[\w+.-]{2,}):(?<rest>.*)/su.exec(normalizedInput);
@@ -198,6 +198,9 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
   };
 }
 
+export function parseAuth(): { password: ""; username: "" };
+export function parseAuth<const S extends string>(input: S): ParseAuthResult<S>;
+export function parseAuth(input?: string): ParsedAuth;
 /**
  * Takes a string of the form `username:password` and returns an object with the username and
  * password decoded.
@@ -207,9 +210,6 @@ export function parseURL(input = "", defaultProto?: string): ParsedURL {
  * @param [input] - The URL to parse.
  * @returns An object with two properties: username and password.
  */
-export function parseAuth(): { password: ""; username: "" };
-export function parseAuth<const S extends string>(input: S): ParseAuthResult<S>;
-export function parseAuth(input?: string): ParsedAuth;
 export function parseAuth(input = ""): ParsedAuth {
   const firstColon = input.indexOf(":");
   if (firstColon === -1) {
@@ -224,6 +224,9 @@ export function parseAuth(input = ""): ParsedAuth {
   };
 }
 
+export function parseHost(): { hostname: ""; port: undefined };
+export function parseHost<const S extends string>(input: S): ParseHostResult<S>;
+export function parseHost(input?: string): ParsedHost;
 /**
  * Takes a string, and returns an object with two properties: `hostname` and `port`.
  *
@@ -246,9 +249,6 @@ export function parseAuth(input = ""): ParsedAuth {
  * @param [input] - The URL to parse.
  * @returns An object with `hostname` and `port` (the port is undefined when absent).
  */
-export function parseHost(): { hostname: ""; port: undefined };
-export function parseHost<const S extends string>(input: S): ParseHostResult<S>;
-export function parseHost(input?: string): ParsedHost;
 export function parseHost(input = ""): ParsedHost {
   if (input.startsWith("[")) {
     const end = input.indexOf("]");
@@ -279,6 +279,10 @@ export function parseHost(input = ""): ParsedHost {
   };
 }
 
+export function stringifyParsedURL<const P extends Partial<ParsedURL>>(
+  parsed: P,
+): StringifyParsedURLResult<P>;
+export function stringifyParsedURL(parsed: Partial<ParsedURL>): string;
 /**
  * Takes a `ParsedURL` object and returns the stringified URL.
  *
@@ -296,10 +300,6 @@ export function parseHost(input = ""): ParsedHost {
  * @param [parsed] - The parsed URL
  * @returns A stringified URL.
  */
-export function stringifyParsedURL<const P extends Partial<ParsedURL>>(
-  parsed: P,
-): StringifyParsedURLResult<P>;
-export function stringifyParsedURL(parsed: Partial<ParsedURL>): string;
 export function stringifyParsedURL(parsed: Partial<ParsedURL>): string {
   const pathname = parsed.pathname ?? "";
   const rawSearch = parsed.search ?? "";
@@ -321,6 +321,11 @@ export function stringifyParsedURL(parsed: Partial<ParsedURL>): string {
 const FILENAME_STRICT_REGEX = /(?:^|\/)(?<filename>[^/][^./]*\.[^/]+)$/u;
 const FILENAME_REGEX = /(?:^|\/)(?<filename>[^/]+)$/u;
 
+export function parseFilename<const S extends string, const Strict extends boolean = false>(
+  input: S,
+  opts?: { strict?: Strict },
+): Refine<S, ParseFilename<S, Strict>, string | undefined>;
+export function parseFilename(input?: string, opts?: { strict?: boolean }): string | undefined;
 /**
  * Parses a URL and returns last segment in path as filename.
  *
@@ -342,11 +347,6 @@ const FILENAME_REGEX = /(?:^|\/)(?<filename>[^/]+)$/u;
  * @param [opts] - Options.
  * @param [opts.strict] - Only return filename if it has an extension.
  */
-export function parseFilename<const S extends string, const Strict extends boolean = false>(
-  input: S,
-  opts?: { strict?: Strict },
-): Refine<S, ParseFilename<S, Strict>, string | undefined>;
-export function parseFilename(input?: string, opts?: { strict?: boolean }): string | undefined;
 export function parseFilename(input = "", opts?: { strict?: boolean }): string | undefined {
   const { pathname } = parseURL(input);
   const matches =

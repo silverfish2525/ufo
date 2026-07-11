@@ -10,6 +10,11 @@ import { parseURL } from "../parse";
 import { parseQuery, stringifyQuery } from "../query";
 import { modifyParsedURL } from "./_modify";
 
+export function withQuery<const Input extends string, const Q extends QueryObject>(
+  input: Input,
+  query: Q,
+): WithQueryResult<Input, Q>;
+export function withQuery(input: string, query: QueryObject): string;
 /**
  * Add/Replace the query section of the URL.
  *
@@ -24,11 +29,6 @@ import { modifyParsedURL } from "./_modify";
  * @returns The URL with the query parameters applied.
  * @group utils
  */
-export function withQuery<const Input extends string, const Q extends QueryObject>(
-  input: Input,
-  query: Q,
-): WithQueryResult<Input, Q>;
-export function withQuery(input: string, query: QueryObject): string;
 export function withQuery(input: string, query: QueryObject): string {
   return modifyParsedURL(input, (parsed) => {
     parsed.search = stringifyQuery({
@@ -38,6 +38,14 @@ export function withQuery(input: string, query: QueryObject): string {
   });
 }
 
+export function filterQuery<const S extends string>(
+  input: S,
+  predicate: (key: string, value: string | string[]) => boolean,
+): FilterQueryResult<S>;
+export function filterQuery(
+  input: string,
+  predicate: (key: string, value: string | string[]) => boolean,
+): string;
 /**
  * Filters the query section of the URL, keeping only entries for which `predicate` returns `true`.
  *
@@ -52,14 +60,6 @@ export function withQuery(input: string, query: QueryObject): string {
  * @returns The URL with only the query entries passing the predicate.
  * @group utils
  */
-export function filterQuery<const S extends string>(
-  input: S,
-  predicate: (key: string, value: string | string[]) => boolean,
-): FilterQueryResult<S>;
-export function filterQuery(
-  input: string,
-  predicate: (key: string, value: string | string[]) => boolean,
-): string;
 export function filterQuery(
   input: string,
   predicate: (key: string, value: string | string[]) => boolean,
@@ -84,6 +84,11 @@ export function filterQuery(
   });
 }
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
+export function getQuery<const S extends string>(input: S): GetQueryResult<S>;
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
+export function getQuery<T extends ParsedQuery = ParsedQuery>(input: string): T;
+export function getQuery(input: string): ParsedQuery;
 /**
  * Parses and decodes the query object of an input URL into an object.
  *
@@ -97,11 +102,6 @@ export function filterQuery(
  * @returns The parsed query object.
  * @group utils
  */
-// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
-export function getQuery<const S extends string>(input: S): GetQueryResult<S>;
-// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
-export function getQuery<T extends ParsedQuery = ParsedQuery>(input: string): T;
-export function getQuery(input: string): ParsedQuery;
 export function getQuery(input: string): ParsedQuery {
   return parseQuery(parseURL(input).search);
 }

@@ -32,6 +32,11 @@ function appendQueryParameter(object: ParsedQuery, rawKey: string, rawValue: str
   }
 }
 
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
+export function parseQuery<const S extends string>(parametersString: S): ParseQueryResult<S>;
+// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
+export function parseQuery<T extends ParsedQuery = ParsedQuery>(parametersString?: string): T;
+export function parseQuery(parametersString?: string): ParsedQuery;
 /**
  * Parses and decodes a query string into an object.
  *
@@ -54,11 +59,6 @@ function appendQueryParameter(object: ParsedQuery, rawKey: string, rawValue: str
  *
  * @group Query_utils
  */
-// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
-export function parseQuery<const S extends string>(parametersString: S): ParseQueryResult<S>;
-// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- public API: callers can specify return type
-export function parseQuery<T extends ParsedQuery = ParsedQuery>(parametersString?: string): T;
-export function parseQuery(parametersString?: string): ParsedQuery;
 export function parseQuery(parametersString = ""): ParsedQuery {
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.create(null) returns any; intentional for prototype-pollution safety
   const object = Object.create(null) as ParsedQuery;
@@ -100,6 +100,11 @@ export function parseQuery(parametersString = ""): ParsedQuery {
   return object;
 }
 
+export function encodeQueryItem<const K extends string, const V extends QueryValue | QueryValue[]>(
+  key: K,
+  value: V,
+): StringifyQueryItem<K, V>;
+export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): string;
 /**
  * Encodes a pair of key and value into a url query string value.
  *
@@ -117,11 +122,6 @@ export function parseQuery(parametersString = ""): ParsedQuery {
  *
  * @group Query_utils
  */
-export function encodeQueryItem<const K extends string, const V extends QueryValue | QueryValue[]>(
-  key: K,
-  value: V,
-): StringifyQueryItem<K, V>;
-export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): string;
 export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): string {
   let normalizedValue: QueryValue | QueryValue[] = value;
   if (typeof normalizedValue === "number" || typeof normalizedValue === "boolean") {
@@ -148,6 +148,8 @@ export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): 
   return `${encodeQueryKey(key)}=${encodeQueryValue(normalizedValue)}`;
 }
 
+export function stringifyQuery<const T extends QueryObject>(query: T): StringifyQueryResult<T>;
+export function stringifyQuery(query: QueryObject): string;
 /**
  * Stringfies and encodes a query object into a query string.
  *
@@ -163,8 +165,6 @@ export function encodeQueryItem(key: string, value: QueryValue | QueryValue[]): 
  *
  * @group Query_utils
  */
-export function stringifyQuery<const T extends QueryObject>(query: T): StringifyQueryResult<T>;
-export function stringifyQuery(query: QueryObject): string;
 export function stringifyQuery(query: QueryObject): string {
   // Single-pass builder (PR #333 by @saripovdenis).
   let result = "";

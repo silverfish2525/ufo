@@ -55,6 +55,8 @@ function lookupCaseInsensitive(table: Readonly<Record<string, string>>, match: s
   return table[match.toLowerCase()] ?? match;
 }
 
+export function encode<const S extends string>(text: S): EncodeResult<S>;
+export function encode(text: string | number): string;
 /**
  * Encodes characters that need to be encoded in the path, search and hash
  * sections of the URL.
@@ -64,12 +66,12 @@ function lookupCaseInsensitive(table: Readonly<Record<string, string>>, match: s
  * @param text - string to encode
  * @returns encoded string
  */
-export function encode<const S extends string>(text: S): EncodeResult<S>;
-export function encode(text: string | number): string;
 export function encode(text: string | number): string {
   return encodeURI(`${text}`).replace(ENC_PIPE_RE, "|");
 }
 
+export function encodeHash<const S extends string>(text: S): EncodeHashResult<S>;
+export function encodeHash(text: string): string;
 /**
  * Encodes characters that need to be encoded in the hash section of the URL.
  *
@@ -78,14 +80,14 @@ export function encode(text: string | number): string {
  * @param text - string to encode
  * @returns encoded string
  */
-export function encodeHash<const S extends string>(text: S): EncodeHashResult<S>;
-export function encodeHash(text: string): string;
 export function encodeHash(text: string): string {
   return encode(text).replace(ENC_HASH_RESTORE_RE, (m) =>
     lookupCaseInsensitive(ENC_HASH_RESTORE_MAP, m),
   );
 }
 
+export function encodeQueryValue<const S extends string>(input: S): EncodeQueryResult<S>;
+export function encodeQueryValue(input: QueryValue): string;
 /**
  * Encodes characters that need to be encoded for query values in the query
  * section of the URL.
@@ -95,8 +97,6 @@ export function encodeHash(text: string): string {
  * @param input - string to encode
  * @returns encoded string
  */
-export function encodeQueryValue<const S extends string>(input: S): EncodeQueryResult<S>;
-export function encodeQueryValue(input: QueryValue): string;
 export function encodeQueryValue(input: QueryValue): string {
   return (
     encode(typeof input === "string" ? input : JSON.stringify(input))
@@ -107,6 +107,8 @@ export function encodeQueryValue(input: QueryValue): string {
   );
 }
 
+export function encodeQueryKey<const S extends string>(text: S): EncodeQueryResult<S>;
+export function encodeQueryKey(text: string | number): string;
 /**
  * Encodes characters that need to be encoded for query values in the query
  * section of the URL and also encodes the `=` character.
@@ -116,12 +118,12 @@ export function encodeQueryValue(input: QueryValue): string {
  * @param text - string to encode
  * @returns The percent-encoded query key string.
  */
-export function encodeQueryKey<const S extends string>(text: S): EncodeQueryResult<S>;
-export function encodeQueryKey(text: string | number): string;
 export function encodeQueryKey(text: string | number): string {
   return encodeQueryValue(text);
 }
 
+export function encodePath<const S extends string>(text: S): EncodePathResult<S>;
+export function encodePath(text: string | number): string;
 /**
  * Encodes characters that need to be encoded in the path section of the URL.
  *
@@ -130,14 +132,14 @@ export function encodeQueryKey(text: string | number): string {
  * @param text - string to encode
  * @returns encoded string
  */
-export function encodePath<const S extends string>(text: S): EncodePathResult<S>;
-export function encodePath(text: string | number): string;
 export function encodePath(text: string | number): string {
   return encode(text)
     .replace(ENC_ENC_SLASH_RE, "%2F")
     .replace(RAW_PATH_ENCODE_RE, (c) => RAW_PATH_ENCODE_MAP[c] ?? c);
 }
 
+export function encodeParam<const S extends string>(text: S): EncodeParamResult<S>;
+export function encodeParam(text: string | number): string;
 /**
  * Encodes characters that need to be encoded in the path section of the URL as a
  * param. This function encodes everything `encodePath` does plus the
@@ -148,12 +150,13 @@ export function encodePath(text: string | number): string {
  * @param text - string to encode
  * @returns encoded string
  */
-export function encodeParam<const S extends string>(text: S): EncodeParamResult<S>;
-export function encodeParam(text: string | number): string;
 export function encodeParam(text: string | number): string {
   return encodePath(text).replace(SLASH_RE, "%2F");
 }
 
+export function decode(): "";
+export function decode<const S extends string>(text: S): DecodeResult<S>;
+export function decode(text?: string | number): string;
 /**
  * Decodes text using `decodeURIComponent`. Returns the original text if it
  * fails.
@@ -163,9 +166,6 @@ export function encodeParam(text: string | number): string {
  * @param text - string to decode
  * @returns decoded string
  */
-export function decode(): "";
-export function decode<const S extends string>(text: S): DecodeResult<S>;
-export function decode(text?: string | number): string;
 export function decode(text: string | number = ""): string {
   try {
     return decodeURIComponent(`${text}`);
@@ -174,6 +174,8 @@ export function decode(text: string | number = ""): string {
   }
 }
 
+export function decodePath<const S extends string>(text: S): DecodePathResult<S>;
+export function decodePath(text: string): string;
 /**
  * Decodes path section of URL (consistent with encodePath for slash encoding).
  *
@@ -182,12 +184,12 @@ export function decode(text: string | number = ""): string {
  * @param text - string to decode
  * @returns decoded string
  */
-export function decodePath<const S extends string>(text: S): DecodePathResult<S>;
-export function decodePath(text: string): string;
 export function decodePath(text: string): string {
   return decode(text.replace(ENC_SLASH_RE, "%252F"));
 }
 
+export function decodeQueryKey<const S extends string>(text: S): DecodeQueryResult<S>;
+export function decodeQueryKey(text: string): string;
 /**
  * Decodes query key (consistent with `encodeQueryKey` for plus encoding).
  *
@@ -196,12 +198,12 @@ export function decodePath(text: string): string {
  * @param text - string to decode
  * @returns decoded string
  */
-export function decodeQueryKey<const S extends string>(text: S): DecodeQueryResult<S>;
-export function decodeQueryKey(text: string): string;
 export function decodeQueryKey(text: string): string {
   return decode(text.replace(PLUS_RE, " "));
 }
 
+export function decodeQueryValue<const S extends string>(text: S): DecodeQueryResult<S>;
+export function decodeQueryValue(text: string): string;
 /**
  * Decodes query value (consistent with `encodeQueryValue` for plus encoding).
  *
@@ -210,20 +212,10 @@ export function decodeQueryKey(text: string): string {
  * @param text - string to decode
  * @returns decoded string
  */
-export function decodeQueryValue<const S extends string>(text: S): DecodeQueryResult<S>;
-export function decodeQueryValue(text: string): string;
 export function decodeQueryValue(text: string): string {
   return decode(text.replace(PLUS_RE, " "));
 }
 
-/**
- * Encodes hostname with punycode encoding, then percent-encodes the four
- * authority-structural characters (`/`, `?`, `#`, `@`) so a decoded host
- * cannot leak into path/query/fragment/userinfo slots when the host is
- * re-serialized (SEC-20: normalizeURL host round-trip).
- *
- * @group encoding_utils
- */
 const HOST_STRUCTURAL_RE = /[/?#@]/gu;
 const HOST_STRUCTURAL_ENCODE: Readonly<Record<string, string>> = Object.freeze({
   "#": "%23",
@@ -238,6 +230,14 @@ function encodeHostStructural(c: string): string {
 export function encodeHost(): "";
 export function encodeHost<const S extends string>(name: S): EncodeHostResult<S>;
 export function encodeHost(name?: string): string;
+/**
+ * Encodes hostname with punycode encoding, then percent-encodes the four
+ * authority-structural characters (`/`, `?`, `#`, `@`) so a decoded host
+ * cannot leak into path/query/fragment/userinfo slots when the host is
+ * re-serialized (SEC-20: normalizeURL host round-trip).
+ *
+ * @group encoding_utils
+ */
 export function encodeHost(name = ""): string {
   return toASCII(name).replace(HOST_STRUCTURAL_RE, encodeHostStructural);
 }

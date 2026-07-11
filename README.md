@@ -26,9 +26,8 @@ URL utilities for humans — a **security-hardened, WHATWG-conformant, type-refi
   host on `localhost:9000`.
 - **New APIs**: `withHost`, `withPort`, `withoutPort`, `withoutAuth`,
   `withPathParameters`.
-- **Full drop-in compatibility**: 100 % additive — every upstream export
-  present with the same signature. **ESM-only** (`dist/index.js` +
-  `dist/index.d.ts`) — see [v3.0.0 breaking notes](./CHANGELOG.md).
+- **ESM-only** (`dist/index.js` + `dist/index.d.ts`) — see [v3.0.0
+  breaking notes](./CHANGELOG.md).
 
 ## Requirements
 
@@ -77,25 +76,6 @@ import { parseURL } from "https://unpkg.com/better-ufo/dist/index.js";
 > `require()`, either use Node 22+ (which supports `require(esm)`) or
 > pin to `better-ufo@^2` (see [CHANGELOG](./CHANGELOG.md)).
 
-### Drop-in replacement for `ufo`
-
-If you're already using `ufo`, add an override to swap the implementation
-without changing imports:
-
-```jsonc
-// package.json (pnpm)
-{
-  "pnpm": {
-    "overrides": {
-      "ufo": "npm:better-ufo@^2",
-    },
-  },
-}
-```
-
-See [CREDITS.md](./CREDITS.md) for the behavioral differences vs
-upstream (all bugfixes/security-guards, no API removals).
-
 <!-- automd:jsdocs src=./src defaultGroup=utils -->
 
 ## Encoding Utils
@@ -124,6 +104,10 @@ Encodes characters that need to be encoded in the path, search and hash sections
 
 Encodes characters that need to be encoded in the hash section of the URL.
 
+### `encodeHost(name)`
+
+Encodes hostname with punycode encoding, then percent-encodes the four authority-structural characters (`/`, `?`, `#`, `@`) so a decoded host cannot leak into path/query/fragment/userinfo slots when the host is re-serialized (SEC-20: normalizeURL host round-trip).
+
 ### `encodeParam(text)`
 
 Encodes characters that need to be encoded in the path section of the URL as a param. This function encodes everything `encodePath` does plus the slash (`/`) character.
@@ -146,6 +130,22 @@ Encodes characters that need to be encoded for query values in the query section
 
 Takes a string of the form `username:password` and returns an object with the username and password decoded.
 
+### `parseFilename(input, opts?: { strict? })`
+
+Parses a URL and returns last segment in path as filename.
+
+If `{ strict: true }` is passed as the second argument, it will only return the last segment only if ending with an extension.
+
+**Example:**
+
+```js
+// Result: filename.ext
+parseFilename("http://example.com/path/to/filename.ext");
+
+// Result: undefined
+parseFilename("/path/to/.hidden-file", { strict: true });
+```
+
 ### `parseHost(input)`
 
 Takes a string, and returns an object with two properties: `hostname` and `port`.
@@ -162,6 +162,34 @@ parseHost("[::1]:8080");
 // { hostname: '[::1]', port: '8080' }
 ```
 
+### `parsePath(input)`
+
+Splits the input string into three parts, and returns an object with those three parts.
+
+**Example:**
+
+```js
+parsePath("http://foo.com/foo?test=123#token");
+// { pathname: 'http://foo.com/foo', search: '?test=123', hash: '#token' }
+```
+
+### `parseURL(input, defaultProto?)`
+
+Takes a URL string and returns an object with the URL's `protocol`, `auth`, `host`, `pathname`, `search`, and `hash`.
+
+**Example:**
+
+```js
+parseURL("http://foo.com/foo?test=123#token");
+// { protocol: 'http:', auth: '', host: 'foo.com', pathname: '/foo', search: '?test=123', hash: '#token' }
+
+parseURL("foo.com/foo?test=123#token");
+// { pathname: 'foo.com/foo', search: '?test=123', hash: '#token' }
+
+parseURL("foo.com/foo?test=123#token", "https://");
+// { protocol: 'https:', auth: '', host: 'foo.com', pathname: '/foo', search: '?test=123', hash: '#token' }
+```
+
 ### `stringifyParsedURL(parsed)`
 
 Takes a `ParsedURL` object and returns the stringified URL.
@@ -175,15 +203,70 @@ obj.host = "bar.com";
 stringifyParsedURL(obj); // "http://bar.com/foo?test=123#token"
 ```
 
+## Query Utils
+
+### `encodeQueryItem(key, value)`
+
+Encodes a pair of key and value into a url query string value.
+
+If the value is an array, it will be encoded as multiple key-value pairs with the same key.
+
+**Example:**
+
+```js
+encodeQueryItem("message", "Hello World");
+// 'message=Hello+World'
+
+encodeQueryItem("tags", ["javascript", "web", "dev"]);
+// 'tags=javascript&tags=web&tags=dev'
+```
+
+### `parseQuery(parametersString)`
+
+Parses and decodes a query string into an object.
+
+The input can be a query string with or without the leading `?`.
+
+**Example:**
+
+```js
+parseQuery("?foo=bar&baz=qux");
+// { foo: "bar", baz: "qux" }
+
+parseQuery("tags=javascript&tags=web&tags=dev");
+// { tags: ["javascript", "web", "dev"] }
+```
+
+### `stringifyQuery(query)`
+
+Stringfies and encodes a query object into a query string.
+
+**Example:**
+
+```js
+stringifyQuery({ foo: "bar", baz: "qux" });
+// 'foo=bar&baz=qux'
+
+stringifyQuery({ foo: "bar", baz: undefined });
+// 'foo=bar'
+```
+
 ## Utils
 
 ### `$URL()`
 
 ### `cleanDoubleSlashes(input)`
 
-### `encodeHost(name)`
+Removes double slashes from the URL.
 
-### `encodeQueryItem(key, value)`
+**Example:**
+
+```js
+cleanDoubleSlashes("//foo//bar//"); // "/foo/bar/"
+
+cleanDoubleSlashes("http://example.com/analyze//http://localhost:3000//");
+// Returns "http://example.com/analyze/http://localhost:3000/"
+```
 
 ### `filterQuery(input, predicate)`
 
@@ -208,6 +291,8 @@ getQuery("http://foo.com/foo?test=123&unicode=%E5%A5%BD");
 
 ### `hasLeadingSlash(input)`
 
+Checks if the input has a leading slash (e.g. `/foo`).
+
 ### `hasProtocol(inputString, opts)`
 
 Checks if the input has a protocol.
@@ -231,6 +316,8 @@ hasProtocol("data:text/plain", { strict: true }); // false
 ```
 
 ### `hasTrailingSlash(input, respectQueryAndFragment?)`
+
+Checks if the URL or pathname ends with a trailing slash.
 
 ### `isEmptyURL(url)`
 
@@ -263,6 +350,14 @@ Checks if the input URL is neither empty nor `/`.
 
 ### `isRelative(inputString)`
 
+Check if a path starts with `./` or `../`.
+
+**Example:**
+
+```js
+isRelative("./foo"); // true
+```
+
 ### `isSamePath(p1, p2)`
 
 Checks if two paths are the same regardless of trailing slash.
@@ -275,30 +370,69 @@ isSamePath("/foo", "/foo/"); // true
 
 ### `isScriptProtocol(protocol?)`
 
+Checks if the input protocol is any of the dangerous `blob:`, `data:`, `javascript`: or `vbscript:` protocols.
+
+**Example:**
+
+```js
+isScriptProtocol("javascript:alert(1)"); // true
+
+isScriptProtocol("data:text/html,hello"); // true
+
+isScriptProtocol("blob:hello"); // true
+
+isScriptProtocol("vbscript:alert(1)"); // true
+
+isScriptProtocol("https://example.com"); // false
+```
+
 ### `isSpecialScheme(scheme?)`
 
+Returns true if the given protocol/scheme is a WHATWG "special scheme".
+
 ### `joinRelativeURL()`
+
+Joins multiple URL segments into a single URL and also handles relative paths with `./` and `../`.
+
+**Example:**
+
+```js
+joinRelativeURL("/a", "../b", "./c"); // "/b/c"
+```
 
 ### `joinURL(base)`
 
 ### `normalizeURL(input)`
 
-### `parseFilename(input, opts?: { strict? })`
+Normalizes the input URL:
 
-### `parsePath(input)`
+- Ensures the URL is properly encoded - Ensures pathname starts with a slash - Preserves protocol/host if provided
 
-### `parseQuery(parametersString)`
+**Example:**
 
-### `parseURL(input, defaultProto?)`
+```js
+normalizeURL("test?query=123 123#hash, test");
+// Returns "test?query=123%20123#hash,%20test"
+
+normalizeURL("http://localhost:3000");
+// Returns "http://localhost:3000"
+```
 
 ### `resolveURL(base)`
+
+Resolves multiple URL segments into a single URL.
+
+**Example:**
+
+```js
+resolveURL("http://foo.com/foo?test=123#token", "bar", "baz");
+// Returns "http://foo.com/foo/bar/baz?test=123#token"
+```
 
 ### `SPECIAL_SCHEMES`
 
 - **Type**: `any`
 - **Default**: `{}`
-
-### `stringifyQuery(query)`
 
 ### `withBase(input, base, opts?)`
 
@@ -321,6 +455,16 @@ withBase("//host/x", "/", { allowProtocolRelative: true }); // "//host/x"
 
 ### `withFragment(input, hash)`
 
+Adds or replaces the fragment section of the URL.
+
+**Example:**
+
+```js
+withFragment("/foo", "bar"); // "/foo#bar"
+withFragment("/foo#bar", "baz"); // "/foo#baz"
+withFragment("/foo#bar", ""); // "/foo"
+```
+
 ### `withHost(input, host)`
 
 Sets or replaces the host authority slot, preserving `auth`, port, path, search, and hash. Relative inputs (no scheme, no leading `//`) are returned unchanged — `withHost` is a _replace_ operator, not a promote-to-absolute\* operator.
@@ -340,9 +484,33 @@ withHost("/only/path", "example.com");
 
 ### `withHttp(input)`
 
+Adds or replaces the URL protocol to `http://`.
+
+**Example:**
+
+```js
+withHttp("https://example.com"); // http://example.com
+```
+
 ### `withHttps(input)`
 
+Adds or replaces the URL protocol to `https://`.
+
+**Example:**
+
+```js
+withHttps("http://example.com"); // https://example.com
+```
+
 ### `withLeadingSlash(input)`
+
+Ensures the URL or pathname has a leading slash.
+
+**Example:**
+
+```js
+withLeadingSlash("foo"); // "/foo"
+```
 
 ### `withoutAuth(input)`
 
@@ -371,9 +539,35 @@ withoutBase("/foo/bar", "/foo"); // "/bar"
 
 ### `withoutFragment(input)`
 
+Removes the fragment section from the URL.
+
+**Example:**
+
+```js
+withoutFragment("http://example.com/foo?q=123#bar");
+// Returns "http://example.com/foo?q=123"
+```
+
 ### `withoutHost(input)`
 
+Removes the host from the URL while preserving everything else.
+
+**Example:**
+
+```js
+withoutHost("http://example.com/foo?q=123#bar");
+// Returns "/foo?q=123#bar"
+```
+
 ### `withoutLeadingSlash(input)`
+
+Removes leading slash from the URL or pathname.
+
+**Example:**
+
+```js
+withoutLeadingSlash("/foo"); // "foo"
+```
 
 ### `withoutPort(input)`
 
@@ -389,6 +583,14 @@ withoutPort("/relative/path"); // "/relative/path"
 
 ### `withoutProtocol(input)`
 
+Removes the protocol from the input.
+
+**Example:**
+
+```js
+withoutProtocol("http://example.com"); // "example.com"
+```
+
 ### `withoutQuery(input)`
 
 Removes the query string from a URL, preserving path and fragment.
@@ -402,9 +604,25 @@ withoutQuery("https://a.com/b?x=1#h");
 
 ### `withoutTrailingSlash(input, respectQueryAndFragment?)`
 
+Removes the trailing slash from the URL or pathname.
+
+If second argument is `true`, it will only remove the trailing slash if it's not part of the query or fragment with cost of more expensive operations.
+
+**Example:**
+
+```js
+withoutTrailingSlash("/foo/"); // "/foo"
+
+withoutTrailingSlash("/path/?query=true", true); // "/path?query=true"
+```
+
 ### `withPathParameters(template, parameters, options)`
 
 Substitutes path-parameter placeholders in a URL template with values from a parameters object. Values are percent-encoded via `encodeParam` (which also encodes `/`, so a placeholder occupies exactly one path segment).
+
+The template is scanned linearly for `{name}` placeholders — no regex is executed on the input, so the routine is O(n) and safe against ReDoS. Callers who need a different delimiter pair should pass `options.delimiters`, which shares the same linear-time scanner.
+
+**Breaking change in v3.0.0:** the deprecated `options.interpolate` regex option has been REMOVED (it executed a caller-supplied `RegExp` on library input and could not be made ReDoS-safe synchronously). Use `options.delimiters` for any non-`{name}` placeholder syntax; the common `{{name}}` case is `{ delimiters: ["{{", "}}"] }`.
 
 **Example:**
 
@@ -412,18 +630,7 @@ Substitutes path-parameter placeholders in a URL template with values from a par
 withPathParameters("/api/users/{userId}", { userId: "abc" });
 // → "/api/users/abc"
 
-withPathParameters("/api/users/{userId}/posts/{postId}", {
-  userId: "42",
-  postId: "hello",
-});
-// → "/api/users/42/posts/hello"
-
-// Mustache-style double-brace via custom interpolate:
-withPathParameters(
-  "/api/users/{{userId}}",
-  { userId: "abc" },
-  { interpolate: /\{\{([\s\S]+?)\}\}/g },
-);
+withPathParameters("/api/users/{{userId}}", { userId: "abc" }, { delimiters: ["{{", "}}"] });
 // → "/api/users/abc"
 ```
 
@@ -443,9 +650,37 @@ withPort("/only/path", 8080); // "/only/path"  (no-op)
 
 ### `withProtocol(input, protocol)`
 
+Adds or replaces protocol of the input URL.
+
+**Example:**
+
+```js
+withProtocol("http://example.com", "ftp://"); // "ftp://example.com"
+```
+
 ### `withQuery(input, query)`
 
+Add/Replace the query section of the URL.
+
+**Example:**
+
+```js
+withQuery("/foo?page=a", { token: "secret" }); // "/foo?page=a&token=secret"
+```
+
 ### `withTrailingSlash(input, respectQueryAndFragment?)`
+
+Ensures the URL ends with a trailing slash.
+
+If second argument is `true`, it will only add the trailing slash if it's not part of the query or fragment with cost of more expensive operation.
+
+**Example:**
+
+```js
+withTrailingSlash("/foo"); // "/foo/"
+
+withTrailingSlash("/path?query=true", true); // "/path/?query=true"
+```
 
 <!-- /automd -->
 

@@ -364,16 +364,11 @@ describe("parse extras — refined", () => {
     expectTypeOf<StringifyParsedURLResult<Partial<ParsedURL>>>().toEqualTypeOf<string>();
   });
   it("stringifyParsedURL widens when protocol is empty and authority is non-empty (hidden `protocolRelative` marker)", () => {
-    // Runtime `parseURL("//x.io/a")` sets a hidden `protocolRelative` symbol
-    // On the returned object; `stringifyParsedURL` reads that symbol to emit
-    // A leading `//`. The public type strips the marker (plan §4), so the
-    // Type-level output MUST widen for empty-protocol + non-empty-authority
-    // Shapes rather than pretend `"x.io/a"` is exact.
+    // `parseURL("//x.io/a")` sets a hidden `protocolRelative` symbol that
+    // `stringifyParsedURL` reads to emit `//`. The public type strips the
+    // Marker, so empty-protocol + non-empty-authority MUST widen.
     expectTypeOf(stringifyParsedURL(parseURL("//x.io/a"))).toEqualTypeOf<string>();
-    // A direct call without the marker also widens to `string` in this
-    // Shape — that's an accepted over-widening (still a valid supertype).
     expectTypeOf(stringifyParsedURL({ host: "x.io", pathname: "/a" })).toEqualTypeOf<string>();
-    // Sanity: explicit protocol keeps the exact composition.
     expectTypeOf(
       stringifyParsedURL({ host: "x.io", pathname: "/a", protocol: "https:" }),
     ).toEqualTypeOf<"https://x.io/a">();
@@ -423,14 +418,11 @@ describe("filterQuery — baseline", () => {
 
 describe("resolve / normalize / joinRelative — baseline", () => {
   it("resolveURL: literal-fold single-base identity, else exact", () => {
-    // No extra inputs → base returned verbatim.
     expectTypeOf(resolveURL("/a")).toEqualTypeOf<"/a">();
-    // All-empty extra inputs → base returned verbatim.
     expectTypeOf(resolveURL("/a", "")).toEqualTypeOf<"/a">();
     expectTypeOf(resolveURL("/a", "", "")).toEqualTypeOf<"/a">();
     // Non-empty extra input → runtime fold, exact literal.
     expectTypeOf(resolveURL("/a", "b")).toEqualTypeOf<"/a/b">();
-    // Dynamic base or segment still widens.
     expectTypeOf(resolveURL(dyn, dyn)).toEqualTypeOf<string>();
   });
 
@@ -459,7 +451,6 @@ describe("resolve / normalize / joinRelative — baseline", () => {
     expectTypeOf(normalizeURL("/x?a=1")).toEqualTypeOf<"/x?a=1">();
     // Percent triple that is not `%20`/`%2F` still degrades (decode table not modeled).
     expectTypeOf(normalizeURL("/test%2Bfile")).toEqualTypeOf<string>();
-    // Dynamic input always degrades.
     expectTypeOf(normalizeURL(dyn)).toEqualTypeOf<string>();
   });
 
@@ -543,10 +534,6 @@ describe("withoutQuery", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// JoinRelativeURL refined + cleanDoubleSlashes
-// ---------------------------------------------------------------------------
-
 describe("joinRelativeURL — refined", () => {
   it("dynamic base degrades to string", () => {
     expectTypeOf(joinRelativeURL(dyn, "/b")).toEqualTypeOf<string>();
@@ -595,21 +582,17 @@ describe("joinRelativeURL — refined", () => {
   });
 
   it("parts containing `:` widen to string (protocol-sentinel branches unmodeled)", () => {
-    // Runtime `joinRelativeURL` has two protocol-sentinel branches: (a) `..`
-    // Is SKIPPED when `segments.length === 1 && hasProtocol(segments[0])`, so
-    // `joinRelativeURL("http:", "..")` returns `"http:"`, not `""`. (b) After
-    // A `:/` merge, `sindex === 1` triggers `${prev}/${next}` composition.
-    // The type-level fold does not model `hasProtocol`, so any `:` widens.
+    // Runtime skips `..` when `segments.length === 1 && hasProtocol(...)`
+    // And also merges `${prev}/${next}` after a `:/` split. Neither is
+    // Modeled at the type level; any `:` widens deliberately.
     expectTypeOf(joinRelativeURL("http:", "..")).toEqualTypeOf<string>();
     expectTypeOf(joinRelativeURL("http:", "..", "a")).toEqualTypeOf<string>();
     expectTypeOf(joinRelativeURL("mailto:a@b", "c")).toEqualTypeOf<string>();
   });
 
   it("union literal parts widen when ANY branch contains `:` or `//`", () => {
-    // `HasJoinRelativeUnmodeled<"a" | "http:">` distributes to `false | true`
-    // = `boolean`. `AnyJoinRelativeUnmodeled` must use `true extends ...`
-    // Any-member semantics so a colon-containing union branch widens the
-    // Whole call, not just the branches it appears in.
+    // Distributive: `HasJoinRelativeUnmodeled<\"a\" | \"http:\">` = `boolean`;
+    // Any-member semantics via `true extends ...` is required.
     expectTypeOf(joinRelativeURL(maybeScheme, "..")).toEqualTypeOf<string>();
   });
 });
@@ -647,10 +630,6 @@ describe("cleanDoubleSlashes", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// IsScriptProtocol / isSpecialScheme — literal-boolean membership
-// (expectations mirror VERIFIED runtime behavior, not the stale JSDoc)
-// ---------------------------------------------------------------------------
 describe("isSpecialScheme — refined", () => {
   it("dynamic string degrades to boolean", () => {
     expectTypeOf(isSpecialScheme(dyn)).toEqualTypeOf<boolean>();
@@ -756,18 +735,18 @@ describe("withPathParameters — refined", () => {
   it("dynamic template widens to string", () => {
     expectTypeOf(withPathParameters(dyn, { v: "y" })).toEqualTypeOf<string>();
   });
-  it("custom interpolate regex widens result to string", () => {
+  it("non-default delimiters widen result to string", () => {
     expectTypeOf(
-      withPathParameters("/x/{{v}}", { v: "y" }, { interpolate: /\{\{(?<name>[\s\S]+?)\}\}/gu }),
+      withPathParameters("/x/{{v}}", { v: "y" }, { delimiters: ["{{", "}}"] }),
     ).toEqualTypeOf<string>();
   });
   it("options typed broadly as WithPathParametersOptions widens", () => {
     const broadOptions: WithPathParametersOptions = {
-      interpolate: /\{\{(?<name>[\s\S]+?)\}\}/gu,
+      delimiters: ["{{", "}}"],
     };
     expectTypeOf(withPathParameters("/x/{{v}}", { v: "y" }, broadOptions)).toEqualTypeOf<string>();
   });
-  it("default-shape WithPathParametersOptions still widens (interpolate may be RegExp)", () => {
+  it("default-shape WithPathParametersOptions still widens (delimiters may be non-default)", () => {
     const broadDefaultOptions: WithPathParametersOptions = {};
     expectTypeOf(
       withPathParameters("/x/{missing}", {}, broadDefaultOptions),
@@ -834,12 +813,12 @@ describe("withPathParameters — parameter keys", () => {
   it("dynamic template accepts arbitrary keys", () => {
     expectTypeOf(withPathParameters(dyn, { anything: "abc" })).toEqualTypeOf<string>();
   });
-  it("custom interpolate widens and accepts extra keys", () => {
+  it("non-default delimiters widen and accept extra keys", () => {
     expectTypeOf(
       withPathParameters(
         "/x/{{userId}}",
         { extra: "x", userId: "abc" },
-        { interpolate: /\{\{(?<name>[\s\S]+?)\}\}/gu },
+        { delimiters: ["{{", "}}"] },
       ),
     ).toEqualTypeOf<string>();
   });
@@ -1158,9 +1137,8 @@ describe("parse — no args", () => {
     }>();
   });
   it("parseHost bare host with non-digit numeric-shape port falls back (matches runtime `/\\d+/`)", () => {
-    // Runtime `parseHost` splits the port only for `/\d+/`. TypeScript's
-    // `${number}` template admits scientific / decimal / underscore forms
-    // That the runtime rejects; the type must mirror the runtime narrowly.
+    // Runtime `/\d+/` rejects the scientific / decimal / underscore forms
+    // TypeScript's `${number}` template admits; use `IsAllDigits` instead.
     expectTypeOf(parseHost("foo.com:1e2")).toEqualTypeOf<{
       hostname: "foo.com:1e2";
       port: undefined;
@@ -1169,16 +1147,12 @@ describe("parse — no args", () => {
       hostname: "foo.com:1.5";
       port: undefined;
     }>();
-    // Sanity: a normal digit-only port still splits correctly.
     expectTypeOf(parseHost("foo.com:443")).toEqualTypeOf<{
       hostname: "foo.com";
       port: "443";
     }>();
   });
-  it("parseHost bare host with empty port falls back (matches runtime `/\\d+/` requiring ≥1 digit)", () => {
-    // Runtime `parseHost("foo.com:")` returns `{ hostname: "foo.com:", port: undefined }`
-    // Because `""` fails `/\d+/`. Pin the `IsAllDigits<"">` empty guard: if
-    // It regressed to `true`, the port would incorrectly split as `""`.
+  it('parseHost bare host with empty port falls back (`IsAllDigits<"">` empty guard)', () => {
     expectTypeOf(parseHost("foo.com:")).toEqualTypeOf<{
       hostname: "foo.com:";
       port: undefined;
@@ -1200,13 +1174,26 @@ describe("withPort — port validation", () => {
   it("port 0 is `never` (runtime throws)", () => {
     expectTypeOf(withPort("http://x.io", 0)).toEqualTypeOf<never>();
   });
-  it("port with leading zero is `never`", () => {
-    expectTypeOf(withPort("http://x.io", "0080")).toEqualTypeOf<never>();
+  it("port with leading-zero all-digit string widens to `string` (runtime coerces via `Number()`)", () => {
+    // Runtime `validatePort("0080")` → `Number("0080") === 80` accepted;
+    // TypeScript can't discriminate the canonical numeric value from a
+    // Leading-zero all-digit string, so widen instead of a wrong `never`.
+    expectTypeOf(withPort("http://x.io", "0080")).toEqualTypeOf<string>();
   });
-  it("5-digit port is `string` (may be in `10000..65535` or beyond)", () => {
-    // Runtime accepts 10000..65535 and rejects 65536..99999. TypeScript
-    // Cannot discriminate 5-digit literals without integer arithmetic, so
-    // The type-level boundary is `string` rather than a wrong `never`.
+  it("port with leading-zero non-digit string is `never` (runtime rejects)", () => {
+    // Runtime `validatePort("0.5")` fails `Number.isInteger` and throws;
+    // Same for "0abc" (`Number("0abc")` is NaN). Must NOT widen to string.
+    expectTypeOf(withPort("http://x.io", "0.5")).toEqualTypeOf<never>();
+    expectTypeOf(withPort("http://x.io", "0abc")).toEqualTypeOf<never>();
+  });
+  it("numeric decimal port with leading zero is `never` (matches `Number.isInteger` rejection)", () => {
+    // Numeric `0.5` stringifies to `"0.5"` and enters the leading-zero
+    // Branch; the `CountDigits<...> extends false` gate correctly routes
+    // Non-digit content to `"invalid"` rather than the widened `unknown`.
+    expectTypeOf(withPort("http://x.io", 0.5)).toEqualTypeOf<never>();
+    expectTypeOf(withPort("http://x.io", 0.1)).toEqualTypeOf<never>();
+  });
+  it("5-digit port is `string` (runtime accepts `10000..65535`, TypeScript can't do integer arithmetic)", () => {
     expectTypeOf(withPort("http://x.io", 65_536)).toEqualTypeOf<string>();
     expectTypeOf(withPort("http://x.io", 65_535)).toEqualTypeOf<string>();
     expectTypeOf(withPort("http://x.io", 10_000)).toEqualTypeOf<string>();
@@ -1230,14 +1217,11 @@ describe("withPort — port validation", () => {
     expectTypeOf(withPort("http://x.io", broadPortString)).toEqualTypeOf<string>();
   });
   it("invalid port on authority-less input is still `never` (port validates first)", () => {
-    // Runtime `withPort` calls `validatePort` BEFORE inspecting the input,
-    // So an invalid port throws regardless of whether the input has an
-    // Authority slot. Pin the ordering: a relative input with an invalid
-    // Port MUST be `never`, not `Input`.
+    // Pin runtime `validatePort`-first order: an invalid port on a
+    // Relative input MUST be `never`, not `Input`.
     expectTypeOf(withPort("/only/path", 0)).toEqualTypeOf<never>();
     expectTypeOf(withPort("/only/path", "abc")).toEqualTypeOf<never>();
     expectTypeOf(withPort("/only/path", -1)).toEqualTypeOf<never>();
-    // Sanity: a relative input with a provably-valid port is identity.
     expectTypeOf(withPort("/only/path", 443)).toEqualTypeOf<"/only/path">();
   });
 });

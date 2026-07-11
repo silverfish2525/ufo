@@ -10,13 +10,13 @@ import type {
 
 const TRAILING_SLASH_RE = /\/$|\/\?|\/#/u;
 
+export function hasTrailingSlash<const S extends string>(input: S): HasTrailingSlash<S>;
+export function hasTrailingSlash(input?: string, respectQueryAndFragment?: boolean): boolean;
 /**
  * Checks if the URL or pathname ends with a trailing slash.
  *
  * @group utils
  */
-export function hasTrailingSlash<const S extends string>(input: S): HasTrailingSlash<S>;
-export function hasTrailingSlash(input?: string, respectQueryAndFragment?: boolean): boolean;
 export function hasTrailingSlash(input = "", respectQueryAndFragment?: boolean): boolean {
   if (respectQueryAndFragment !== true) {
     return input.endsWith("/");
@@ -24,6 +24,10 @@ export function hasTrailingSlash(input = "", respectQueryAndFragment?: boolean):
   return TRAILING_SLASH_RE.test(input);
 }
 
+export function withoutTrailingSlash<const S extends string>(
+  input: S,
+): Refine<S, WithoutTrailingSlash<S>>;
+export function withoutTrailingSlash(input?: string, respectQueryAndFragment?: boolean): string;
 /**
  * Removes the trailing slash from the URL or pathname.
  *
@@ -39,10 +43,6 @@ export function hasTrailingSlash(input = "", respectQueryAndFragment?: boolean):
  *
  * @group utils
  */
-export function withoutTrailingSlash<const S extends string>(
-  input: S,
-): Refine<S, WithoutTrailingSlash<S>>;
-export function withoutTrailingSlash(input?: string, respectQueryAndFragment?: boolean): string;
 export function withoutTrailingSlash(input = "", respectQueryAndFragment?: boolean): string {
   if (respectQueryAndFragment !== true) {
     return (hasTrailingSlash(input) ? input.slice(0, -1) : input) || "/";
@@ -62,6 +62,10 @@ export function withoutTrailingSlash(input = "", respectQueryAndFragment?: boole
   return (cleanPath || "/") + (s.length > 0 ? `?${s.join("?")}` : "") + fragment;
 }
 
+export function withTrailingSlash<const S extends string>(
+  input: S,
+): Refine<S, WithTrailingSlash<S>>;
+export function withTrailingSlash(input?: string, respectQueryAndFragment?: boolean): string;
 /**
  * Ensures the URL ends with a trailing slash.
  *
@@ -77,10 +81,6 @@ export function withoutTrailingSlash(input = "", respectQueryAndFragment?: boole
  *
  * @group utils
  */
-export function withTrailingSlash<const S extends string>(
-  input: S,
-): Refine<S, WithTrailingSlash<S>>;
-export function withTrailingSlash(input?: string, respectQueryAndFragment?: boolean): string;
 export function withTrailingSlash(input = "", respectQueryAndFragment?: boolean): string {
   if (respectQueryAndFragment !== true) {
     return input.endsWith("/") ? input : `${input}/`;
@@ -102,17 +102,21 @@ export function withTrailingSlash(input = "", respectQueryAndFragment?: boolean)
   return `${s0}/${s.length > 0 ? `?${s.join("?")}` : ""}${fragment}`;
 }
 
+export function hasLeadingSlash<const S extends string>(input: S): HasLeadingSlash<S>;
+export function hasLeadingSlash(input?: string): boolean;
 /**
  * Checks if the input has a leading slash (e.g. `/foo`).
  *
  * @group utils
  */
-export function hasLeadingSlash<const S extends string>(input: S): HasLeadingSlash<S>;
-export function hasLeadingSlash(input?: string): boolean;
 export function hasLeadingSlash(input = ""): boolean {
   return input.startsWith("/");
 }
 
+export function withoutLeadingSlash<const S extends string>(
+  input: S,
+): Refine<S, WithoutLeadingSlash<S>>;
+export function withoutLeadingSlash(input?: string): string;
 /**
  * Removes leading slash from the URL or pathname.
  *
@@ -124,14 +128,12 @@ export function hasLeadingSlash(input = ""): boolean {
  *
  * @group utils
  */
-export function withoutLeadingSlash<const S extends string>(
-  input: S,
-): Refine<S, WithoutLeadingSlash<S>>;
-export function withoutLeadingSlash(input?: string): string;
 export function withoutLeadingSlash(input = ""): string {
   return (hasLeadingSlash(input) ? input.slice(1) : input) || "/";
 }
 
+export function withLeadingSlash<const S extends string>(input: S): Refine<S, WithLeadingSlash<S>>;
+export function withLeadingSlash(input?: string): string;
 /**
  * Ensures the URL or pathname has a leading slash.
  *
@@ -143,8 +145,6 @@ export function withoutLeadingSlash(input = ""): string {
  *
  * @group utils
  */
-export function withLeadingSlash<const S extends string>(input: S): Refine<S, WithLeadingSlash<S>>;
-export function withLeadingSlash(input?: string): string;
 export function withLeadingSlash(input = ""): string {
   return hasLeadingSlash(input) ? input : `/${input}`;
 }

@@ -2,6 +2,8 @@ import type { Refine, WithFragment, WithoutFragment } from "../_types";
 import { encodeHash } from "../encoding";
 import { modifyParsedURL } from "./_modify";
 
+export function withoutFragment<const S extends string>(input: S): Refine<S, WithoutFragment<S>>;
+export function withoutFragment(input: string): string;
 /**
  * Removes the fragment section from the URL.
  *
@@ -14,8 +16,6 @@ import { modifyParsedURL } from "./_modify";
  *
  * @group utils
  */
-export function withoutFragment<const S extends string>(input: S): Refine<S, WithoutFragment<S>>;
-export function withoutFragment(input: string): string;
 export function withoutFragment(input: string): string {
   if (
     !input.includes("#") &&
@@ -29,6 +29,11 @@ export function withoutFragment(input: string): string {
   });
 }
 
+export function withFragment<const Input extends string, const Hash extends string>(
+  input: Input,
+  hash: Hash,
+): Refine<Input, WithFragment<Input, Hash>>;
+export function withFragment(input: string, hash: string): string;
 /**
  * Adds or replaces the fragment section of the URL.
  *
@@ -42,11 +47,6 @@ export function withoutFragment(input: string): string {
  *
  * @group utils
  */
-export function withFragment<const Input extends string, const Hash extends string>(
-  input: Input,
-  hash: Hash,
-): Refine<Input, WithFragment<Input, Hash>>;
-export function withFragment(input: string, hash: string): string;
 export function withFragment(input: string, hash: string): string {
   if (hash === "" || hash === "#") {
     return withoutFragment(input);

@@ -102,6 +102,8 @@ export function hasProtocol(inputString: string, opts: boolean | HasProtocolOpti
   );
 }
 
+export function isScriptProtocol<const S extends string>(protocol: S): IsScriptProtocol<S>;
+export function isScriptProtocol(protocol?: string): boolean;
 /**
  * Checks if the input protocol is any of the dangerous `blob:`, `data:`, `javascript`: or `vbscript:` protocols.
  *
@@ -121,8 +123,6 @@ export function hasProtocol(inputString: string, opts: boolean | HasProtocolOpti
  *
  * @group utils
  */
-export function isScriptProtocol<const S extends string>(protocol: S): IsScriptProtocol<S>;
-export function isScriptProtocol(protocol?: string): boolean;
 export function isScriptProtocol(protocol?: string): boolean {
   if (protocol === undefined || protocol === "") {
     return false;
@@ -134,6 +134,11 @@ export function isScriptProtocol(protocol?: string): boolean {
   return SCRIPT_SCHEMES.has(normalized);
 }
 
+export function withProtocol<const S extends string, const P extends string>(
+  input: S,
+  protocol: P,
+): Refine<S, WithProtocol<S, P>>;
+export function withProtocol(input: string, protocol: string): string;
 /**
  * Adds or replaces protocol of the input URL.
  *
@@ -144,11 +149,6 @@ export function isScriptProtocol(protocol?: string): boolean {
  *
  * @group utils
  */
-export function withProtocol<const S extends string, const P extends string>(
-  input: S,
-  protocol: P,
-): Refine<S, WithProtocol<S, P>>;
-export function withProtocol(input: string, protocol: string): string;
 export function withProtocol(input: string, protocol: string): string {
   // Unjs/ufo#237: `localhost:9000` has no scheme; strip only real scheme prefixes.
   if (HOST_PORT_RE.test(input)) {
@@ -162,6 +162,8 @@ export function withProtocol(input: string, protocol: string): string {
   return protocol + input.slice(match[0].length);
 }
 
+export function withHttp<const S extends string>(input: S): Refine<S, WithProtocol<S, "http://">>;
+export function withHttp(input: string): string;
 /**
  * Adds or replaces the URL protocol to `http://`.
  *
@@ -173,12 +175,12 @@ export function withProtocol(input: string, protocol: string): string {
  *
  * @group utils
  */
-export function withHttp<const S extends string>(input: S): Refine<S, WithProtocol<S, "http://">>;
-export function withHttp(input: string): string;
 export function withHttp(input: string): string {
   return withProtocol(input, "http://");
 }
 
+export function withHttps<const S extends string>(input: S): Refine<S, WithProtocol<S, "https://">>;
+export function withHttps(input: string): string;
 /**
  * Adds or replaces the URL protocol to `https://`.
  *
@@ -190,12 +192,12 @@ export function withHttp(input: string): string {
  *
  * @group utils
  */
-export function withHttps<const S extends string>(input: S): Refine<S, WithProtocol<S, "https://">>;
-export function withHttps(input: string): string;
 export function withHttps(input: string): string {
   return withProtocol(input, "https://");
 }
 
+export function withoutProtocol<const S extends string>(input: S): Refine<S, WithProtocol<S, "">>;
+export function withoutProtocol(input: string): string;
 /**
  * Removes the protocol from the input.
  *
@@ -204,8 +206,6 @@ export function withHttps(input: string): string {
  * withoutProtocol("http://example.com"); // "example.com"
  * ```
  */
-export function withoutProtocol<const S extends string>(input: S): Refine<S, WithProtocol<S, "">>;
-export function withoutProtocol(input: string): string;
 export function withoutProtocol(input: string): string {
   return withProtocol(input, "");
 }
@@ -225,13 +225,13 @@ export const SPECIAL_SCHEMES: ReadonlySet<string> = new Set([
   "file",
 ]);
 
+export function isSpecialScheme<const S extends string>(scheme: S): IsSpecialScheme<S>;
+export function isSpecialScheme(scheme?: string): boolean;
 /**
  * Returns true if the given protocol/scheme is a WHATWG "special scheme".
  *
  * @group utils
  */
-export function isSpecialScheme<const S extends string>(scheme: S): IsSpecialScheme<S>;
-export function isSpecialScheme(scheme?: string): boolean;
 export function isSpecialScheme(scheme?: string): boolean {
   if (scheme === undefined || scheme === "") {
     return false;

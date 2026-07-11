@@ -6,12 +6,18 @@ import type { ExactPathParameters, PathParametersFor, WithPathParametersResult }
  */
 export interface WithPathParametersOptions {
   /**
-   * Regex matching a template placeholder. The first capture group is the
-   * placeholder name looked up in `parameters`. Must have the `g` flag.
+   * Delimiter pair marking a placeholder. Both strings must be non-empty and
+   * distinct; the first capture between them is the placeholder name looked
+   * up in `parameters`.
    *
-   * Default: `/\{([\s\S]+?)\}/g` (mustache-single-brace: `{name}`).
+   * The scanner is linear-time (`indexOf`-based) and safe against
+   * pathological input regardless of delimiter shape.
+   *
+   * Default: `["{", "}"]` (mustache-single-brace: `{name}`).
+   *
+   * Common alternatives: `["{{", "}}"]` (mustache-double-brace).
    */
-  interpolate?: RegExp;
+  delimiters?: readonly [string, string];
   /**
    * How to handle a placeholder whose name is not present in `parameters`.
    *
@@ -46,69 +52,46 @@ function resolveKey(
   }
 }
 
-function replaceDefault(
+/**
+ * Linear-time delimiter scanner. Runtime is O(n) in the template length,
+ * regardless of delimiter shape — no regex is ever executed on the input,
+ * so the routine is safe against ReDoS by construction (closes the
+ * `js/polynomial-redos` CodeQL alert that previously fired against the
+ * removed `RegExp`-based `interpolate` sink).
+ */
+function replaceWithDelimiters(
   template: string,
   parameters: Record<string, string | number>,
-  onMissing: "leave" | "throw" | "empty",
+  scanner: { open: string; close: string; onMissing: "leave" | "throw" | "empty" },
 ): string {
+  const { open, close, onMissing } = scanner;
+  const openLen = open.length;
+  const closeLen = close.length;
+  const minInner = 1;
   let result = "";
   let i = 0;
   const { length } = template;
   while (i < length) {
-    const open = template.indexOf("{", i);
-    if (open === -1) {
+    const openAt = template.indexOf(open, i);
+    if (openAt === -1) {
       result += template.slice(i);
       break;
     }
-    // `+ 2` mirrors the ≥1-char-between-braces rule of the old `+?` regex.
-    const close = template.indexOf("}", open + 2);
-    if (close === -1) {
+    const closeAt = template.indexOf(close, openAt + openLen + minInner);
+    if (closeAt === -1) {
       result += template.slice(i);
       break;
     }
-    result += template.slice(i, open);
-    const match = template.slice(open, close + 1);
-    const key = template.slice(open + 1, close).trim();
+    result += template.slice(i, openAt);
+    const match = template.slice(openAt, closeAt + closeLen);
+    const key = template.slice(openAt + openLen, closeAt).trim();
     const sub = resolveKey(key, parameters, onMissing);
     result += sub ?? match;
-    i = close + 1;
+    i = closeAt + closeLen;
   }
   return result;
 }
 
-/**
- * Substitutes path-parameter placeholders in a URL template with values from
- * a parameters object. Values are percent-encoded via `encodeParam` (which
- * also encodes `/`, so a placeholder occupies exactly one path segment).
- *
- * @example
- * ```js
- * withPathParameters("/api/users/{userId}", { userId: "abc" })
- * // → "/api/users/abc"
- *
- * withPathParameters("/api/users/{userId}/posts/{postId}", {
- *   userId: "42",
- *   postId: "hello",
- * });
- * // → "/api/users/42/posts/hello"
- *
- * // Mustache-style double-brace via custom interpolate:
- * withPathParameters(
- *   "/api/users/{{userId}}",
- *   { userId: "abc" },
- *   { interpolate: /\{\{([\s\S]+?)\}\}/g },
- * );
- * // → "/api/users/abc"
- * ```
- *
- * Closes upstream unjs/ufo#243.
- *
- * @param template - The URL template string with placeholders.
- * @param parameters - An object mapping placeholder names to values.
- * @param [options] - Options controlling placeholder syntax and missing-key behaviour.
- * @returns The URL string with all placeholders substituted.
- * @group utils
- */
 export function withPathParameters<
   const Template extends string,
   const Parameters extends PathParametersFor<Template>,
@@ -137,27 +120,62 @@ export function withPathParameters(
   parameters: Record<string, string | number>,
   options: WithPathParametersOptions & { onMissing: "empty" | "leave" },
 ): string;
+/**
+ * Substitutes path-parameter placeholders in a URL template with values
+ * from a parameters object. Values are percent-encoded via `encodeParam`
+ * (which also encodes `/`, so a placeholder occupies exactly one path
+ * segment).
+ *
+ * The template is scanned linearly for `{name}` placeholders — no regex
+ * is executed on the input, so the routine is O(n) and safe against
+ * ReDoS. Callers who need a different delimiter pair should pass
+ * `options.delimiters`, which shares the same linear-time scanner.
+ *
+ * **Breaking change in v3.0.0:** the deprecated `options.interpolate`
+ * regex option has been REMOVED (it executed a caller-supplied `RegExp`
+ * on library input and could not be made ReDoS-safe synchronously). Use
+ * `options.delimiters` for any non-`{name}` placeholder syntax; the
+ * common `{{name}}` case is `{ delimiters: ["{{", "}}"] }`.
+ *
+ * @example
+ * ```js
+ * withPathParameters("/api/users/{userId}", { userId: "abc" });
+ * // → "/api/users/abc"
+ *
+ * withPathParameters(
+ *   "/api/users/{{userId}}",
+ *   { userId: "abc" },
+ *   { delimiters: ["{{", "}}"] },
+ * );
+ * // → "/api/users/abc"
+ * ```
+ *
+ * Closes upstream unjs/ufo#243.
+ *
+ * @param template - The URL template string with placeholders.
+ * @param parameters - An object mapping placeholder names to values.
+ * @param [options] - Options controlling placeholder syntax and missing-key behaviour.
+ * @returns The URL string with all placeholders substituted.
+ * @group utils
+ */
 export function withPathParameters(
   template: string,
   parameters: Record<string, string | number>,
   options: WithPathParametersOptions = {},
 ): string {
-  const { interpolate, onMissing = "leave" } = options;
-  if (interpolate === undefined) {
-    return replaceDefault(template, parameters, onMissing);
-  }
-  if (!interpolate.flags.includes("g")) {
+  const { delimiters, onMissing = "leave" } = options;
+  const [open, close] = delimiters ?? ["{", "}"];
+  if (open === "" || close === "") {
     throw new TypeError(
-      `withPathParameters: options.interpolate must have the /g flag ` +
-        `(got ${interpolate.toString()}).`,
+      `withPathParameters: options.delimiters entries must be non-empty ` +
+        `(got [${JSON.stringify(open)}, ${JSON.stringify(close)}]).`,
     );
   }
-  interpolate.lastIndex = 0;
-  return template.replace(interpolate, (match, name: unknown) => {
-    if (typeof name !== "string") {
-      return match;
-    }
-    const sub = resolveKey(name.trim(), parameters, onMissing);
-    return sub ?? match;
-  });
+  if (open === close) {
+    throw new TypeError(
+      `withPathParameters: options.delimiters entries must be distinct ` +
+        `(got [${JSON.stringify(open)}, ${JSON.stringify(close)}]).`,
+    );
+  }
+  return replaceWithDelimiters(template, parameters, { close, onMissing, open });
 }

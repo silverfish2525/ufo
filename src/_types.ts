@@ -432,19 +432,12 @@ export type JoinURLResult<Base extends string, Rest extends readonly string[]> =
     : string;
 
 /**
- * `true` when `S` contains a shape the type-level dot-segment fold does not
- * model. Widens for:
+ * `true` when `S` contains a shape the dot-segment fold does not model.
  *
- * - `//` runs and `://` protocol shapes — the runtime split regex
- *   (`/\/(?!\/)/u`) and protocol guard path are not modeled here.
- * - Any part containing `:` — runtime `joinRelativeURL` has two
- *   protocol-sentinel branches we choose not to replicate: (a) `..` is
- *   SKIPPED when `segments.length === 1 && hasProtocol(segments[0])`, and
- *   (b) `sindex === 1 && segments.at(-1)?.endsWith(":/")` triggers a
- *   protocol-relative merge. Both hinge on runtime `hasProtocol`, which we
- *   cannot cheaply detect at the type level. Widening on any `:` is a
- *   deliberate over-approximation that keeps `joinRelativeURL("http:", "..")`
- *   and similar cases sound.
+ * - `//` runs and `://` protocol shapes escape the `/(?!/)/u` split.
+ * - Any `:` triggers widening because runtime `joinRelativeURL` skips
+ *   `..` on `hasProtocol(segments[0])` and merges after a `:/` split,
+ *   neither of which is modeled at the type level.
  */
 type HasJoinRelativeUnmodeled<S extends string> = S extends
   | `${string}//${string}`
@@ -1461,13 +1454,14 @@ export type ExtractPathParameters<Template extends string> =
 /**
  * Object shape required by `withPathParameters(template, parameters)` for a
  * literal template under the default interpolation syntax. Widens to
- * `Record<string, string | number>` when a custom `interpolate` regex may
- * bypass the default scanner or when the template is dynamic.
+ * `Record<string, string | number>` when `options.delimiters` is
+ * non-default or the template is dynamic.
  */
 export type PathParametersFor<
   Template extends string,
-  Options extends { interpolate?: RegExp; onMissing?: "leave" | "throw" | "empty" } | undefined =
-    undefined,
+  Options extends
+    | { delimiters?: readonly [string, string]; onMissing?: "leave" | "throw" | "empty" }
+    | undefined = undefined,
 > =
   IsStringLiteral<Template> extends true
     ? PathParameterOptionsAllowDefault<Options> extends true
@@ -1485,34 +1479,13 @@ export type PathParametersFor<
 export type ExactPathParameters<
   Template extends string,
   Parameters extends PathParametersFor<Template, Options>,
-  Options extends { interpolate?: RegExp; onMissing?: "leave" | "throw" | "empty" } | undefined =
-    undefined,
+  Options extends
+    | { delimiters?: readonly [string, string]; onMissing?: "leave" | "throw" | "empty" }
+    | undefined = undefined,
 > = Parameters &
   Record<Exclude<keyof Parameters, keyof PathParametersFor<Template, Options>>, never>;
 
-type PathParameterOptionsShape = { interpolate?: unknown; onMissing?: unknown } | undefined;
-
-/**
- * `true` when the static options type proves the caller cannot supply a
- * custom `interpolate` regex. Conservative: a broad `RegExp` field, or the
- * wide `WithPathParametersOptions` type where `interpolate` may be `RegExp`,
- * forces widening because the runtime scanner is bypassed.
- */
-type PathParameterInterpolateAllowsDefault<Options extends PathParameterOptionsShape> = [
-  Options,
-] extends [undefined]
-  ? true
-  : Options extends { interpolate?: infer Interpolate }
-    ? "interpolate" extends keyof Options
-      ? RegExp extends NonNullable<Interpolate>
-        ? false
-        : NonNullable<Interpolate> extends never
-          ? true
-          : Interpolate extends undefined
-            ? true
-            : false
-      : true
-    : true;
+type PathParameterOptionsShape = { delimiters?: unknown; onMissing?: unknown } | undefined;
 
 /**
  * `true` when the static `onMissing` is either absent or a required single
@@ -1531,11 +1504,31 @@ type PathParameterOnMissingIsPrecise<Options extends PathParameterOptionsShape> 
       : true
     : true;
 
+/**
+ * `true` when the static options type proves the caller cannot supply a
+ * custom `delimiters` pair other than the default `["{", "}"]`. A broad
+ * `readonly [string, string]` widens because the runtime scanner switches
+ * to non-`{`/`}` delimiters and the type-level extractor cannot follow.
+ */
+type PathParameterDelimitersAllowDefault<Options extends PathParameterOptionsShape> = [
+  Options,
+] extends [undefined]
+  ? true
+  : Options extends { delimiters?: infer Delimiters }
+    ? "delimiters" extends keyof Options
+      ? Delimiters extends undefined
+        ? true
+        : Delimiters extends readonly ["{", "}"]
+          ? true
+          : false
+      : true
+    : true;
+
 type PathParameterOptionsAllowDefault<Options extends PathParameterOptionsShape> = [
   Options,
 ] extends [undefined]
   ? true
-  : PathParameterInterpolateAllowsDefault<Options> extends true
+  : PathParameterDelimitersAllowDefault<Options> extends true
     ? PathParameterOnMissingIsPrecise<Options>
     : false;
 
@@ -1551,14 +1544,15 @@ type PathParameterOnMissing<Options extends PathParameterOptionsShape> = [Option
  * Result of `withPathParameters(template, parameters, options?)`. Precise for
  * literal templates + literal parameter maps under the default `{name}`
  * syntax; degrades to `string` for dynamic templates, wide numbers, wide
- * strings, unmodeled characters, custom `interpolate`, or an options type
- * broad enough to permit either.
+ * strings, unmodeled characters, non-default `delimiters`, or an options
+ * type broad enough to permit either.
  */
 export type WithPathParametersResult<
   Template extends string,
   Parameters extends Record<string, PathParameterValue>,
-  Options extends { interpolate?: RegExp; onMissing?: "leave" | "throw" | "empty" } | undefined =
-    undefined,
+  Options extends
+    | { delimiters?: readonly [string, string]; onMissing?: "leave" | "throw" | "empty" }
+    | undefined = undefined,
 > =
   IsStringLiteral<Template> extends true
     ? PathParameterOptionsAllowDefault<Options> extends true
@@ -2104,19 +2098,35 @@ type IsAllDigits<S extends string> = S extends ""
  *   `65536..99999` runtime rejects. TypeScript can't discriminate without
  *   full integer arithmetic, so callers widen to `string`.
  */
+// Runtime `validatePort` coerces string ports via `Number()`
+// (`src/utils/host.ts`), so `"0080"` → 80 and validates. TypeScript
+// Cannot discriminate the canonical numeric value from a leading-zero
+// String literal, so those widen instead of a wrong `never`.
 type IsProvablyValidPort<P extends string | number> = `${P}` extends `-${string}`
   ? "invalid"
-  : `${P}` extends `0${string}`
+  : `${P}` extends "0"
     ? "invalid"
-    : CountDigits<`${P}`> extends infer Digits extends readonly unknown[]
-      ? Digits extends readonly [unknown, unknown, unknown, unknown, unknown, unknown, ...unknown[]]
+    : `${P}` extends `0${string}`
+      ? CountDigits<`${P}`> extends false
         ? "invalid"
-        : Digits extends readonly [unknown, unknown, unknown, unknown, unknown]
-          ? "unknown"
-          : Digits extends readonly [unknown, ...unknown[]]
-            ? "valid"
-            : "invalid"
-      : "invalid";
+        : "unknown"
+      : CountDigits<`${P}`> extends infer Digits extends readonly unknown[]
+        ? Digits extends readonly [
+            unknown,
+            unknown,
+            unknown,
+            unknown,
+            unknown,
+            unknown,
+            ...unknown[],
+          ]
+          ? "invalid"
+          : Digits extends readonly [unknown, unknown, unknown, unknown, unknown]
+            ? "unknown"
+            : Digits extends readonly [unknown, ...unknown[]]
+              ? "valid"
+              : "invalid"
+        : "invalid";
 
 /**
  * `withPort(input, port)` sets the port on an existing authority. Runtime
@@ -2455,12 +2465,9 @@ type HasBroadStringifyField<P> = true extends
   : false;
 
 /**
- * Rendering of an `{authority, no protocol}` shape. The runtime `parseURL`
- * Sets a hidden `protocolRelative` symbol on `//x.io/a`-style inputs;
- * `stringifyParsedURL` reads that symbol to emit a leading `//`. The public
- * Type strips the marker (plan §4), so an empty protocol combined with a
- * Non-empty host/auth is ambiguous at the type level and MUST widen to
- * `string` rather than pretend `"x.io/a"` is exact.
+ * Composition of an `{authority, no protocol}` shape. Runtime `parseURL`
+ * Sets a hidden `protocolRelative` symbol invisible in the public type,
+ * So empty-protocol + non-empty authority MUST widen to `string`.
  */
 type StringifyProtocolRelativeOrAuthority<
   AuthRaw extends string,

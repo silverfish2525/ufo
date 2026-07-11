@@ -528,6 +528,11 @@ describe("withPort", () => {
   it("accepts string port", () => {
     expect(withPort("http://example.com/x", "8080")).toBe("http://example.com:8080/x");
   });
+  it("coerces leading-zero string port via `Number()` (matches runtime `validatePort`)", () => {
+    // `"0080"` → `Number("0080") === 80`. Both runtime coercion and the
+    // Serialized output canonicalize to the same numeric literal.
+    expect(withPort("http://example.com/x", "0080")).toBe("http://example.com:80/x");
+  });
   it("preserves userinfo and IPv6 brackets", () => {
     expect(withPort("http://u:p@example.com/x", 8080)).toBe("http://u:p@example.com:8080/x");
     expect(withPort("http://[::1]/x", 8080)).toBe("http://[::1]:8080/x");
@@ -640,13 +645,9 @@ describe("withPathParameters (issue #243)", () => {
     expect(withPathParameters("/x/{v}", { v: "a/b" })).toBe("/x/a%2Fb");
     expect(withPathParameters("/x/{v}", { v: "has space" })).toBe("/x/has%20space");
   });
-  it("mustache double-brace via custom interpolate", () => {
+  it("mustache double-brace via delimiters option", () => {
     expect(
-      withPathParameters(
-        "/users/{{userId}}",
-        { userId: "abc" },
-        { interpolate: /\{\{(?<name>[\s\S]+?)\}\}/gu },
-      ),
+      withPathParameters("/users/{{userId}}", { userId: "abc" }, { delimiters: ["{{", "}}"] }),
     ).toBe("/users/abc");
   });
   it("trims placeholder whitespace before lookup", () => {
@@ -663,10 +664,16 @@ describe("withPathParameters (issue #243)", () => {
     const template = "/x/{missing}" as string;
     expect(() => withPathParameters(template, {}, { onMissing: "throw" })).toThrow(TypeError);
   });
-  it("rejects non-global interpolate regex", () => {
+  it("rejects empty delimiter entries", () => {
     expect(() =>
-      withPathParameters("/x/{v}", { v: "y" }, { interpolate: /\{(?<name>.+?)\}/u }),
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- intentionally probing runtime guard with an invalid empty open delimiter
+      withPathParameters("/x/{v}", { v: "y" }, { delimiters: ["", "}"] as [string, string] }),
     ).toThrow(TypeError);
+  });
+  it("rejects delimiter entries that are equal (open === close)", () => {
+    expect(() => withPathParameters("/x/{v}", { v: "y" }, { delimiters: ["%", "%"] })).toThrow(
+      TypeError,
+    );
   });
   it("prototype pollution: __proto__ / constructor are not resolved from own props", () => {
     // No __proto__ own key on the params object → fall through onMissing.
@@ -676,17 +683,14 @@ describe("withPathParameters (issue #243)", () => {
     expect(withPathParameters(ctorTemplate, {})).toBe("/x/{constructor}");
   });
 
-  it("resets a reused global interpolate regex before substitution", () => {
-    const interpolate = /\{(?<name>[\s\S]+?)\}/gu;
-    interpolate.lastIndex = 999;
-    expect(withPathParameters("/x/{v}/{w}", { v: "a/b", w: "c d" }, { interpolate })).toBe(
-      "/x/a%2Fb/c%20d",
-    );
-    expect(interpolate.lastIndex).toBe(0);
+  it("supports repeated calls with non-default delimiters", () => {
+    const opts = { delimiters: ["{", "}"] as [string, string] };
+    expect(withPathParameters("/x/{v}/{w}", { v: "a/b", w: "c d" }, opts)).toBe("/x/a%2Fb/c%20d");
+    expect(withPathParameters("/y/{v}", { v: "z" }, opts)).toBe("/y/z");
   });
 
-  it("custom interpolate without a capture leaves the matched text untouched", () => {
-    expect(withPathParameters("/x/{v}", { v: "y" }, { interpolate: /\{v\}/gu })).toBe("/x/{v}");
+  it("non-default delimiter without a matching close leaves the opener verbatim", () => {
+    expect(withPathParameters("/x/{{v}", { v: "y" }, { delimiters: ["{{", "}}"] })).toBe("/x/{{v}");
   });
 
   it("own undefined values leave placeholders unchanged instead of stringifying undefined", () => {

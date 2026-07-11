@@ -40,6 +40,11 @@ export function joinURL(base: string, ...input: (string | JoinURLOptions)[]): st
   return normalizeProtocolRelative(url, base, opts);
 }
 
+export function joinRelativeURL<const Base extends string, const Rest extends readonly string[]>(
+  base: Base,
+  ...input: Rest
+): JoinRelativeURLResult<Base, Rest>;
+export function joinRelativeURL(...parts: string[]): string;
 /**
  * Joins multiple URL segments into a single URL and also handles relative paths with `./` and `../`.
  *
@@ -51,11 +56,6 @@ export function joinURL(base: string, ...input: (string | JoinURLOptions)[]): st
  *
  * @group utils
  */
-export function joinRelativeURL<const Base extends string, const Rest extends readonly string[]>(
-  base: Base,
-  ...input: Rest
-): JoinRelativeURLResult<Base, Rest>;
-export function joinRelativeURL(...parts: string[]): string;
 // oxlint-disable-next-line eslint/complexity -- URL segment-joining algorithm inherently branches on protocol/relative/.. cases
 export function joinRelativeURL(...parts: string[]): string {
   const input = parts.filter(Boolean);
